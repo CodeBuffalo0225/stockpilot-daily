@@ -1,0 +1,372 @@
+{
+  "date": "2026-08-17",
+  "source": "local+notion",
+  "generatedAt": "2026-08-18T17:59:55.999Z",
+  "thesis": "The market is telling you exactly where institutional money is rotating — AI infrastructure is the only game in town right now, and AMD's 8.21% surge on real volume is confirmation that smart money is not waiting for permission to enter semiconductors. ANET is the cleaner fundamental story: AI networking demand is structural, not speculative, and a 4.67% move with an established market position at that confidence level is a setup you take seriously. Everything else on the board is noise — defensive names getting sold, mega-cap tech showing distribution patterns, and no-catalyst movers that are reversal traps waiting to be sprung. The primary risk to this entire book is a macro shock — rising yields or a China export restriction headline that hits the SOX index and takes both positions down simultaneously, so watch the 10-year and any State Department headlines like a hawk.",
+  "counts": {
+    "buy": 2,
+    "watch": 2,
+    "skip": 17,
+    "screened": 115,
+    "universe": 21
+  },
+  "allocation": [
+    {
+      "ticker": "AMD",
+      "name": "AMD",
+      "sector": "Semiconductors",
+      "tier": 2,
+      "positionPct": 3,
+      "entryNote": "Confirmed institutional block accumulation or unusual options flow confirming smart money conviction above key resistance; with SOX index holding strength",
+      "stopNote": "Failure to clear $180-$200 supply zone on volume; or macro headwind (rising yields; China export restriction news) that collapses semiconductor sector rotation",
+      "alphaScore": 7.4,
+      "timeHorizon": "30d"
+    },
+    {
+      "ticker": "ANET",
+      "name": "Arista Networks",
+      "sector": "Technology/Networking",
+      "tier": 2,
+      "positionPct": 3,
+      "entryNote": "Confirmed institutional rotation into networking infrastructure with clean technical breakout above 52-week high or prior consolidation resistance on above-average volume",
+      "stopNote": "Reversal below the breakout level on volume; or sector rotation back to compute-heavy AI plays that leaves ANET as a relative underperformer",
+      "alphaScore": 6.9,
+      "timeHorizon": "30d"
+    },
+    {
+      "ticker": "NVDA",
+      "name": "Nvidia",
+      "sector": "Semiconductors",
+      "tier": 3,
+      "positionPct": 1.5,
+      "entryNote": "Confirmed institutional block accumulation above $225 with volume exceeding 30-day average and no macro deterioration in hyperscaler capex signals",
+      "stopNote": "Any hyperscaler guidance softness or close below $210 support invalidates the momentum thesis",
+      "alphaScore": 6.8,
+      "timeHorizon": "30d"
+    },
+    {
+      "ticker": "MDB",
+      "name": "MongoDB",
+      "sector": "Technology/Software",
+      "tier": 3,
+      "positionPct": 1.5,
+      "entryNote": "Confirmed above-average volume with clean breakout above 50-day and 200-day moving averages; supported by stable macro/rate backdrop",
+      "stopNote": "Low-volume fade within 5 sessions or failure to hold above key moving average support levels",
+      "alphaScore": 5.1,
+      "timeHorizon": "30d"
+    }
+  ],
+  "watches": [
+    {
+      "ticker": "NVDA",
+      "note": "AI infrastructure demand remains a credible institutional catalyst and 3.76% gain shows real momentum, but valuation stretch, hyperscaler guidance risk, and proximity to prior ATH resistance cap the conviction needed for a full BUY at 30-day horizon.",
+      "alphaScore": 6.8
+    },
+    {
+      "ticker": "MDB",
+      "note": "6.32% move at confidence=3 shows momentum but lacks confirmed institutional catalyst, and MDB's high-beta, high-multiple profile in a rate-sensitive environment creates meaningful reversal risk that prevents a full BUY conviction without volume and technical confirmation.",
+      "alphaScore": 5.1
+    }
+  ],
+  "skips": [
+    "MSFT",
+    "IBM",
+    "GOOGL",
+    "HD",
+    "PG",
+    "BP",
+    "JPM",
+    "UNH",
+    "LMT",
+    "CMI",
+    "NEE",
+    "SNDK",
+    "COHR",
+    "ABNB",
+    "DELL",
+    "NET",
+    "SNOW"
+  ],
+  "momentum": [
+    {
+      "ticker": "MDB",
+      "momentumScore": 92.3,
+      "ret21d": 41.8051461395648,
+      "ret63d": 41.8823643966546,
+      "rsExcess63d": 37.22172976544305,
+      "volSurge": 1.0861624543732384,
+      "pctOf52wHigh": 0.9361656905148646,
+      "lastClose": 442.8999938964844
+    },
+    {
+      "ticker": "ABNB",
+      "momentumScore": 91,
+      "ret21d": 23.030559912281298,
+      "ret63d": 35.19006236520064,
+      "rsExcess63d": 30.52942773398909,
+      "volSurge": 1.192242592791015,
+      "pctOf52wHigh": 0.9598119430851719,
+      "lastClose": 179.60000610351562
+    },
+    {
+      "ticker": "DELL",
+      "momentumScore": 88.7,
+      "ret21d": 20.925846688784226,
+      "ret63d": 98.05673187251928,
+      "rsExcess63d": 93.39609724130773,
+      "volSurge": 0.804833700983664,
+      "pctOf52wHigh": 0.9324464909297483,
+      "lastClose": 479.2774963378906
+    },
+    {
+      "ticker": "NET",
+      "momentumScore": 86,
+      "ret21d": 10.377800929683724,
+      "ret63d": 55.130092068673505,
+      "rsExcess63d": 50.469457437461955,
+      "volSurge": 1.092121625365295,
+      "pctOf52wHigh": 0.922506185592106,
+      "lastClose": 306.4750061035156
+    },
+    {
+      "ticker": "ANET",
+      "momentumScore": 84.1,
+      "ret21d": 18.84230126176185,
+      "ret63d": 41.142497119026295,
+      "rsExcess63d": 36.481862487814745,
+      "volSurge": 0.7620896748562811,
+      "pctOf52wHigh": 0.9324771066683017,
+      "lastClose": 200.3800048828125
+    },
+    {
+      "ticker": "SNOW",
+      "momentumScore": 81.8,
+      "ret21d": 24.139087071566504,
+      "ret63d": 111.98323170820335,
+      "rsExcess63d": 107.3225970769918,
+      "volSurge": 0.5954126792098515,
+      "pctOf52wHigh": 0.9761953082092327,
+      "lastClose": 333.80999755859375
+    },
+    {
+      "ticker": "AXON",
+      "momentumScore": 80.9,
+      "ret21d": 18.70639390150803,
+      "ret63d": 54.571546852129146,
+      "rsExcess63d": 49.910912220917595,
+      "volSurge": 0.7972027890497734,
+      "pctOf52wHigh": 0.7626118950360341,
+      "lastClose": 605.7349853515625
+    },
+    {
+      "ticker": "SNDK",
+      "momentumScore": 80.7,
+      "ret21d": 32.20763540905972,
+      "ret63d": 27.249410964621802,
+      "rsExcess63d": 22.58877633341025,
+      "volSurge": 1.0150726270882258,
+      "pctOf52wHigh": 0.7607811351405666,
+      "lastClose": 1791.1754150390625
+    }
+  ],
+  "tape": [
+    {
+      "ticker": "MDB",
+      "price": 442.8999938964844,
+      "changePct": 41.8051461395648,
+      "verdict": "WATCH"
+    },
+    {
+      "ticker": "ABNB",
+      "price": 179.60000610351562,
+      "changePct": 23.030559912281298,
+      "verdict": "SKIP"
+    },
+    {
+      "ticker": "DELL",
+      "price": 479.2774963378906,
+      "changePct": 20.925846688784226,
+      "verdict": "SKIP"
+    },
+    {
+      "ticker": "NET",
+      "price": 306.4750061035156,
+      "changePct": 10.377800929683724,
+      "verdict": "SKIP"
+    },
+    {
+      "ticker": "ANET",
+      "price": 200.3800048828125,
+      "changePct": 18.84230126176185,
+      "verdict": "BUY"
+    },
+    {
+      "ticker": "SNOW",
+      "price": 333.80999755859375,
+      "changePct": 24.139087071566504,
+      "verdict": "SKIP"
+    },
+    {
+      "ticker": "AXON",
+      "price": 605.7349853515625,
+      "changePct": 18.70639390150803,
+      "verdict": null
+    },
+    {
+      "ticker": "SNDK",
+      "price": 1791.1754150390625,
+      "changePct": 32.20763540905972,
+      "verdict": "SKIP"
+    },
+    {
+      "ticker": "STX",
+      "price": 996.8350219726562,
+      "changePct": 26.556516258284272,
+      "verdict": null
+    },
+    {
+      "ticker": "SMCI",
+      "price": 37.93000030517578,
+      "changePct": 56.86517711522436,
+      "verdict": null
+    },
+    {
+      "ticker": "URI",
+      "price": 1173.800048828125,
+      "changePct": 12.302799695411078,
+      "verdict": null
+    },
+    {
+      "ticker": "MU",
+      "price": 1018.510009765625,
+      "changePct": 19.972907134754074,
+      "verdict": null
+    },
+    {
+      "ticker": "MRK",
+      "price": 135.82000732421875,
+      "changePct": 6.525495940563726,
+      "verdict": null
+    },
+    {
+      "ticker": "PLTR",
+      "price": 173.77499389648438,
+      "changePct": 31.2698198268811,
+      "verdict": null
+    },
+    {
+      "ticker": "REGN",
+      "price": 808.0584716796875,
+      "changePct": 19.413389996057507,
+      "verdict": null
+    },
+    {
+      "ticker": "SHOP",
+      "price": 149.14500427246094,
+      "changePct": 20.70654517594535,
+      "verdict": null
+    },
+    {
+      "ticker": "RTX",
+      "price": 223.30999755859375,
+      "changePct": 15.399722958859934,
+      "verdict": null
+    },
+    {
+      "ticker": "MRVL",
+      "price": 235.7949981689453,
+      "changePct": 24.970853997288547,
+      "verdict": null
+    },
+    {
+      "ticker": "BAC",
+      "price": 64.26499938964844,
+      "changePct": 4.88819799168985,
+      "verdict": null
+    },
+    {
+      "ticker": "PH",
+      "price": 1054.2900390625,
+      "changePct": 10.604170619257644,
+      "verdict": null
+    },
+    {
+      "ticker": "NEM",
+      "price": 120.65499877929688,
+      "changePct": 34.509479246600236,
+      "verdict": null
+    },
+    {
+      "ticker": "CRWD",
+      "price": 214.33999633789062,
+      "changePct": 5.544610205490985,
+      "verdict": null
+    },
+    {
+      "ticker": "PANW",
+      "price": 374.3800048828125,
+      "changePct": 4.377164193047934,
+      "verdict": null
+    },
+    {
+      "ticker": "LITE",
+      "price": 983.7470703125,
+      "changePct": 34.24129533587701,
+      "verdict": null
+    },
+    {
+      "ticker": "ZS",
+      "price": 185.14999389648438,
+      "changePct": 23.482720342650076,
+      "verdict": null
+    },
+    {
+      "ticker": "NUE",
+      "price": 271.54010009765625,
+      "changePct": 14.762731666962564,
+      "verdict": null
+    },
+    {
+      "ticker": "ASML",
+      "price": 1885.469970703125,
+      "changePct": 7.890340820784882,
+      "verdict": null
+    },
+    {
+      "ticker": "GE",
+      "price": 370.739990234375,
+      "changePct": 6.280997765531941,
+      "verdict": null
+    }
+  ],
+  "outcomes": {
+    "scored5d": 6,
+    "scored15d": 3,
+    "scored30d": 7,
+    "failedLookups": 0
+  },
+  "rotations": {
+    "flagged": 12,
+    "suggestions": [
+      {
+        "tickerOut": "MSFT",
+        "reason": "hit_rate_failure",
+        "healthSummary": "12 scored BUYs, 8% 30d hit-rate, 0 BUY signals in last 30d",
+        "topCandidate": "AVGO"
+      },
+      {
+        "tickerOut": "NVDA",
+        "reason": "hit_rate_failure",
+        "healthSummary": "12 scored BUYs, 25% 30d hit-rate, 0 BUY signals in last 30d",
+        "topCandidate": "AVGO"
+      },
+      {
+        "tickerOut": "IBM",
+        "reason": "silent_30d",
+        "healthSummary": "1 scored BUYs, 0% 30d hit-rate, 0 BUY signals in last 30d",
+        "topCandidate": "AVGO"
+      }
+    ]
+  },
+  "unansweredCount": 24
+}

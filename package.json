@@ -1,7 +1,7 @@
 {
   "name": "stockpilot-daily",
   "version": "1.0.0",
-  "description": "My Remotion video",
+  "description": "StockPilot Daily \u2014 the daily agent run, rendered as a broadcast-style video",
   "repository": {},
   "license": "UNLICENSED",
   "private": true,
@@ -28,9 +28,14 @@
   },
   "scripts": {
     "dev": "remotion studio",
+    "deck": "tsx src/spine/fetch-deck.ts",
+    "daily": "tsx scripts/daily.ts",
+    "render": "remotion render StockPilotDaily out/stockpilot-vertical.mp4 --props=data/deck.json",
+    "render:landscape": "remotion render StockPilotDailyLandscape out/stockpilot-landscape.mp4 --props=data/deck.json",
     "build": "remotion bundle",
     "upgrade": "remotion upgrade",
-    "lint": "eslint src && tsc"
+    "lint": "eslint src scripts && tsc",
+    "check": "tsx scripts/check-sources.ts"
   },
   "sideEffects": [
     "*.css"

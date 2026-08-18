@@ -91,7 +91,7 @@ export function parseBuysField(text: string | null) {
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line) => {
-      const m = /^([A-Z][A-Z.\-]{0,9})\s*(?:\((\d+(?:\.\d+)?)%\))?\s*(?:—|–|-{2,})\s*(.*)$/.exec(line);
+      const m = /^([A-Z][A-Z.-]{0,9})\s*(?:\((\d+(?:\.\d+)?)%\))?\s*(?:—|–|-{2,})\s*(.*)$/.exec(line);
       if (!m) return { ticker: line.split(/\s/)[0] ?? line, positionPct: null, entryNote: null };
       return {
         ticker: m[1],
@@ -109,7 +109,7 @@ export function parseWatchesField(text: string | null) {
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line) => {
-      const m = /^([A-Z][A-Z.\-]{0,9})\s*(?:—|–|-{2,})\s*(.*)$/.exec(line);
+      const m = /^([A-Z][A-Z.-]{0,9})\s*(?:—|–|-{2,})\s*(.*)$/.exec(line);
       if (!m) return { ticker: line.split(/\s/)[0] ?? line, note: null };
       return { ticker: m[1], note: m[2]?.trim() || null };
     });
@@ -121,7 +121,7 @@ export function parseSkipsField(text: string | null): string[] {
   return text
     .split(/[,\n]/)
     .map((s) => s.trim())
-    .filter((s) => /^[A-Z][A-Z.\-]{0,9}$/.test(s));
+    .filter((s) => /^[A-Z][A-Z.-]{0,9}$/.test(s));
 }
 
 // The Allocation property is a TOON block:
@@ -138,7 +138,7 @@ export function parseAllocationToon(text: string | null) {
   for (const line of text.split('\n')) {
     const row = line.trim();
     if (!row || row.startsWith('allocation[')) continue;
-    const m = /^([A-Z][A-Z.\-]{0,9}),\s*(\d+),\s*(\d+(?:\.\d+)?)\s*(?:,|$)/.exec(row);
+    const m = /^([A-Z][A-Z.-]{0,9}),\s*(\d+),\s*(\d+(?:\.\d+)?)\s*(?:,|$)/.exec(row);
     if (!m) continue;
     out.set(m[1], { tier: Number(m[2]), positionPct: Number(m[3]) });
   }
