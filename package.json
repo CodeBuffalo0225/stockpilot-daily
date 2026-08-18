@@ -6,12 +6,16 @@
   "license": "UNLICENSED",
   "private": true,
   "dependencies": {
+    "@notionhq/client": "2.2.15",
     "@remotion/cli": "4.0.513",
+    "@remotion/google-fonts": "4.0.513",
+    "@remotion/tailwind-v4": "4.0.513",
+    "dotenv": "16.4.5",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "remotion": "4.0.513",
-    "@remotion/tailwind-v4": "4.0.513",
-    "tailwindcss": "4.0.0"
+    "tailwindcss": "4.0.0",
+    "zod": "4.4.3"
   },
   "devDependencies": {
     "@remotion/eslint-config-flat": "4.0.513",
@@ -19,6 +23,7 @@
     "@types/web": "0.0.166",
     "eslint": "9.19.0",
     "prettier": "3.8.1",
+    "tsx": "4.19.2",
     "typescript": "5.9.3"
   },
   "scripts": {
