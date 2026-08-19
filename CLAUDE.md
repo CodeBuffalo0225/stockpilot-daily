@@ -6,18 +6,28 @@ repo is read-only from here.
 
 ## Stack
 
-Remotion 4.0.513 · React 19 · TypeScript (strict) · Zod 4 · `@notionhq/client`
-· tsx for the CLIs.
+Next.js 16 (App Router) on Vercel · Supabase spine · Remotion 4.0.513 +
+`@remotion/player` · React 19 · TypeScript (strict) · Zod 4 ·
+`@notionhq/client` · tsx for the CLIs.
 
 ## Commands
 
 ```bash
+npm run dev                 # Next.js dashboard  <- not Studio any more
+npm run studio              # Remotion Studio
+npm run sync                # spine -> Supabase + data/decks/
 npm run daily -- --both     # pull deck + render both formats
-npm run deck                # pull deck only -> data/deck.json
-npm run dev                 # Remotion Studio
 npm run lint                # eslint + tsc
 npx remotion still StockPilotDaily out/x.png --frame=450 --scale=0.5
 ```
+
+## Data layer
+
+`src/spine/store.ts` (read) and `push-deck.ts` (write) are server-only by
+construction — never import them into a client component. The service role key
+bypasses RLS and must never be `NEXT_PUBLIC_`. Decks are re-validated on the way
+out of Supabase, not just on the way in. `npm run sync` must run on the machine
+holding the pipeline reports; Vercel cannot see them.
 
 ## Layout rules
 
@@ -34,7 +44,10 @@ npx remotion still StockPilotDaily out/x.png --frame=450 --scale=0.5
 
 ## Non-obvious constraints
 
-- **The ticker tape computes its cell widths rather than measuring them.** It is
+- **Two ticker implementations, deliberately different.** Remotion's computes
+  exact cell widths (a deterministic render cannot measure the DOM); the web
+  rail duplicates the list and animates to -50%. Do not unify them.
+- **The Remotion tape computes its cell widths rather than measuring them.** It is
   set in JetBrains Mono (0.6em advance), so widths are known before layout,
   which keeps the loop seamless and the render deterministic. Changing the tape
   font to a proportional face breaks the loop.

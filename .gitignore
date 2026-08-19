@@ -3,3 +3,14 @@ out/
 data/deck.json
 .env
 .DS_Store
+
+# local env
+.env.local
+.env*.local
+
+# next
+.next/
+next-env.d.ts
+
+# synced decks (regenerate with npm run sync)
+data/decks/

@@ -1,7 +1,7 @@
 {
   "name": "stockpilot-daily",
   "version": "1.0.0",
-  "description": "StockPilot Daily \u2014 the daily agent run, rendered as a broadcast-style video",
+  "description": "StockPilot Daily — the daily agent run, rendered as a broadcast-style video",
   "repository": {},
   "license": "UNLICENSED",
   "private": true,
@@ -9,8 +9,11 @@
     "@notionhq/client": "2.2.15",
     "@remotion/cli": "4.0.513",
     "@remotion/google-fonts": "4.0.513",
+    "@remotion/player": "4.0.513",
     "@remotion/tailwind-v4": "4.0.513",
+    "@supabase/supabase-js": "2.48.1",
     "dotenv": "16.4.5",
+    "next": "16.3.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "remotion": "4.0.513",
@@ -20,6 +23,7 @@
   "devDependencies": {
     "@remotion/eslint-config-flat": "4.0.513",
     "@types/react": "19.2.7",
+    "@types/react-dom": "19.2.3",
     "@types/web": "0.0.166",
     "eslint": "9.19.0",
     "prettier": "3.8.1",
@@ -27,15 +31,19 @@
     "typescript": "5.9.3"
   },
   "scripts": {
-    "dev": "remotion studio",
+    "dev": "next dev",
     "deck": "tsx src/spine/fetch-deck.ts",
     "daily": "tsx scripts/daily.ts",
     "render": "remotion render StockPilotDaily out/stockpilot-vertical.mp4 --props=data/deck.json",
     "render:landscape": "remotion render StockPilotDailyLandscape out/stockpilot-landscape.mp4 --props=data/deck.json",
-    "build": "remotion bundle",
+    "build": "next build",
     "upgrade": "remotion upgrade",
-    "lint": "eslint src scripts && tsc",
-    "check": "tsx scripts/check-sources.ts"
+    "lint": "eslint src scripts components app && tsc",
+    "check": "tsx scripts/check-sources.ts",
+    "sync": "tsx scripts/sync.ts",
+    "studio": "remotion studio",
+    "start": "next start",
+    "bundle": "remotion bundle"
   },
   "sideEffects": [
     "*.css"

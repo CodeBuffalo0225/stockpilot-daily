@@ -92,13 +92,17 @@ export function parseBuysField(text: string | null) {
     .filter(Boolean)
     .map((line) => {
       const m = /^([A-Z][A-Z.-]{0,9})\s*(?:\((\d+(?:\.\d+)?)%\))?\s*(?:—|–|-{2,})\s*(.*)$/.exec(line);
-      if (!m) return { ticker: line.split(/\s/)[0] ?? line, positionPct: null, entryNote: null };
+      if (!m) return null;
       return {
         ticker: m[1],
         positionPct: m[2] ? Number(m[2]) : null,
         entryNote: m[3]?.trim() || null,
       };
-    });
+    })
+    // A line that does not parse is dropped, not salvaged. The pipeline writes
+    // "(none)" on a no-BUY day, and an earlier first-word fallback turned that
+    // into a position card reading "(none) 0%".
+    .filter((r): r is { ticker: string; positionPct: number | null; entryNote: string | null } => r !== null);
 }
 
 // "NVDA — AI infrastructure demand remains..."
@@ -110,9 +114,10 @@ export function parseWatchesField(text: string | null) {
     .filter(Boolean)
     .map((line) => {
       const m = /^([A-Z][A-Z.-]{0,9})\s*(?:—|–|-{2,})\s*(.*)$/.exec(line);
-      if (!m) return { ticker: line.split(/\s/)[0] ?? line, note: null };
+      if (!m) return null;
       return { ticker: m[1], note: m[2]?.trim() || null };
-    });
+    })
+    .filter((r): r is { ticker: string; note: string | null } => r !== null);
 }
 
 // "MSFT, IBM, GOOGL, ..."

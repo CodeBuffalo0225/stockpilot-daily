@@ -23,8 +23,13 @@ Two compositions off one shared scene set:
 | `StockPilotDaily` | 1080×1920 | vertical, **primary** — Reels / Shorts / LinkedIn |
 | `StockPilotDailyLandscape` | 1920×1080 | landscape — desktop / YouTube |
 
-Stack: Remotion 4.0.513 · React 19.2.3 · TypeScript strict · Zod 4.4.3 ·
-`@notionhq/client` 2.2.15 · `tsx` for the CLIs. Node 22.
+Stack: Next.js 16.3.1 (App Router) · Remotion 4.0.513 + `@remotion/player` ·
+React 19.2.3 · TypeScript strict · Zod 4.4.3 · Supabase (`@supabase/supabase-js`)
+· `@notionhq/client` · `tsx` for the CLIs. Node 22. Deploys to Vercel.
+
+The app has three faces over one `DailyDeck` record: the Next.js dashboard with
+a live ticker UX, the Remotion Player embedded in it, and the Remotion CLI that
+renders MP4s.
 
 ## State at handoff (2026-08-18)
 
@@ -99,16 +104,21 @@ Renders land in `out/stockpilot-<date>-<format>.mp4`. Keep review stills in
 ## Architecture
 
 ```
-Notion "StockPilot Reports" DB  ─┐
-                                 ├─→ Zod ─→ fork gate ─→ DailyDeck ─→ Remotion
-~/Documents/stockpilot/reports/ ─┘
+Notion  ─┐
+         ├─→ Zod ─→ fork gate ─→ DailyDeck ─→ Supabase ─→ Next.js (Vercel)
+local   ─┘                                 └─→ Remotion CLI ─→ MP4
 ```
 
 ```
+app/           Next.js App Router. page.tsx is a server component.
+components/    Client components: TickerRail, Dashboard.
+supabase/migrations/0001_init.sql
 src/spine/
   schema.ts      Zod. Lenient *Source shapes in, strict DailyDeck out.
   sources.ts     The two loaders + the Notion text parsers.
   build-deck.ts  Reconciliation, display caps, derived counts.
+  store.ts       Read side. Supabase when configured, local files otherwise.
+  push-deck.ts   Write side. Upsert jsonb + rewrite child tables.
   fetch-deck.ts  CLI: resolve date -> build -> write data/deck.json
 src/video/
   theme.ts       Colours, fonts, formatters.
@@ -136,6 +146,24 @@ The end card renders the source label (`PIPELINE + NOTION` / `PIPELINE REPORT` /
 `NOTION LOG`). **Keep it.** It is what stops a shared clip from implying Notion
 confirmed data it never held.
 
+## Data layer rules
+
+- **Never import `src/spine/store.ts` or `push-deck.ts` into a client
+  component.** They read `node:fs` and the service role key. Next will fail the
+  build, but the reason is worth knowing before you hit it. (`server-only` is
+  deliberately NOT used — the sync CLI imports these outside Next's bundler,
+  where that package throws.)
+- **`SUPABASE_SERVICE_ROLE_KEY` must never be prefixed `NEXT_PUBLIC_`.** RLS has
+  no anon policy, so that key is the only thing standing between this data and
+  the public. All reads happen in server components.
+- Decks are re-validated with Zod on the way OUT of Supabase as well as in.
+  The column is `jsonb` and a hand-edit in the Supabase dashboard is exactly the
+  kind of thing that puts a broken deck in front of the renderer.
+- `npm run sync` must run on the machine that has the pipeline reports. Vercel
+  can reach Notion but not `~/Documents/stockpilot`, so a cron there would
+  silently produce decks with no momentum, outcomes or rotations. There is no
+  Vercel cron for this reason — do not add one without solving that.
+
 ## Non-obvious constraints — read before editing
 
 1. **Notion's `Allocation` property is a TOON block whose note fields contain
@@ -146,7 +174,15 @@ confirmed data it never held.
    available. Do not "fix" the TOON parser with a CSV split — it will silently
    corrupt notes.
 
-2. **The ticker tape computes cell widths; it does not measure them.** The tape
+2. **There are TWO ticker implementations and they work differently on
+   purpose.** The Remotion one (`src/video/components/TickerTape.tsx`) computes
+   exact cell widths from the monospace advance because a deterministic render
+   cannot measure the DOM. The web one (`components/TickerRail.tsx`) duplicates
+   the list and animates to `-50%`, which loops seamlessly at any width. Do not
+   "unify" them — the constraints are genuinely different. The web rail also
+   pauses on hover and is disabled under `prefers-reduced-motion`; keep both.
+
+3. **The Remotion tape computes cell widths; it does not measure them.** The tape
    is set in JetBrains Mono, whose advance width is a fixed `0.6em`, so exact
    pixel widths are known before layout. This is what keeps the loop seamless
    (the strip is drawn twice and translated by exactly one strip width) and the
@@ -154,26 +190,26 @@ confirmed data it never held.
    loop.** If you change the tape font, it must stay monospaced and
    `CHAR_ADVANCE` must be updated to match.
 
-3. **The scale unit derives from the shorter edge** (1080 in both formats), so
+4. **The scale unit derives from the shorter edge** (1080 in both formats), so
    type is physically identical in vertical and landscape. Branch layout on
    `isVertical`, never on raw pixel width. Every px value multiplies by `u` —
    no bare pixel constants in scenes.
 
-4. **`SceneShell fill={…}` is only safe on sparse scenes.** It narrows the inner
+5. **`SceneShell fill={…}` is only safe on sparse scenes.** It narrows the inner
    box by the same factor before scaling so content still lands inside the
    horizontal safe area. `Momentum` and `Allocation` deliberately leave it at 1
    — raising it overflows the frame at the max display caps.
 
-5. **All frame constants live in `src/video/timing.ts`.** Do not scatter frame
+6. **All frame constants live in `src/video/timing.ts`.** Do not scatter frame
    numbers through scene files. A scene whose computed duration is 0 is skipped
    — that is how data-driven omission works (e.g. no thesis ⇒ no thesis scene).
 
-6. **Display caps in `CAPS` (`build-deck.ts`) are load-bearing**: 6 positions,
+7. **Display caps in `CAPS` (`build-deck.ts`) are load-bearing**: 6 positions,
    8 momentum rows, 5 watches, 24 skips, 28 tape cells, 3 rotations. They exist
    so a 21-name scored list cannot push a scene past its safe area. Raising one
    means re-rendering that scene's stills and checking the safe area.
 
-7. Verdict counts are **always derived** from the scored list, never taken on
+8. Verdict counts are **always derived** from the scored list, never taken on
    trust from any source.
 
 ## Rules for changes
