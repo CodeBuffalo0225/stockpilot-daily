@@ -1,9 +1,17 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
   title: 'StockPilot Daily',
   description: 'The daily StockPilot run — ticker, allocation, and the rendered brief.',
+};
+
+// Without this, mobile browsers assume a ~980px layout width and scale the page
+// down, which rendered the ticker at roughly double size on a phone.
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: '#05070d',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
