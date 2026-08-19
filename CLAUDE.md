@@ -61,6 +61,14 @@ holding the pipeline reports; Vercel cannot see them.
 
 ## Rendering
 
-Full renders need roughly 1–2 GB of free disk for intermediate frames. The
-machine hit `ENOSPC` at ~1100/1424 frames on 2026-08-18 with 414 MB free.
-Lower `--jpeg-quality` or render a frame range to reduce the temp footprint.
+Full renders need roughly 1–2 GB of free disk for intermediate frames. A render
+that dies with `ENOSPC` is a disk problem, not a code problem — check
+`df -h /System/Volumes/Data` before touching the render path. Lower
+`--jpeg-quality` or render a frame range to shrink the temp footprint.
+
+Both formats last rendered clean on 2026-08-19: 1424 frames, 47.51s.
+
+## Unverified
+
+The Supabase code paths have never run against a real project — no credentials
+on this machine. Everything tested so far used the local-file fallback.

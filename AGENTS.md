@@ -31,7 +31,7 @@ The app has three faces over one `DailyDeck` record: the Next.js dashboard with
 a live ticker UX, the Remotion Player embedded in it, and the Remotion CLI that
 renders MP4s.
 
-## State at handoff (2026-08-18)
+## State at handoff (2026-08-19)
 
 Everything below is verified, not assumed.
 
@@ -44,38 +44,23 @@ Everything below is verified, not assumed.
   47.47s for the 2026-08-17 deck).
 - ✅ Stills rendered and **visually inspected** across all 8 scenes in both
   orientations.
-- ✅ A 151-frame render produced valid H.264 1080×1920 @30fps (ffprobe
-  confirmed).
-- ❌ **No full-length MP4 has ever been produced.** See the blocker below.
+- ✅ Both full-length MP4s rendered and verified with ffprobe: 1424 frames,
+  47.51s, H.264 — 1080×1920 (17.7 MB) and 1920×1080 (22.1 MB).
+- ✅ `npm run build` (Next production build) passes.
+- ✅ Dashboard verified in a real browser: playback, format toggle, day
+  switching, ticker click-through, mobile at 375px with no horizontal overflow.
+- ⚠️ Supabase has never been exercised against a real project — there were no
+  credentials on this machine. The Supabase code paths are written and typed but
+  **unrun**. The local-file fallback is what has actually been tested. Treat the
+  first real `npm run sync` against Supabase as unverified and watch it closely.
 
-### The one open blocker: disk space, not code
+### Rendering needs disk headroom
 
-A full render fails at roughly frame 1100/1424:
-
-```
-Error: ENOSPC: no space left on device, write
-    at async screenshotTask (.../@remotion/renderer/dist/screenshot-task.js:69:13)
-```
-
-The machine had **394Mi free of 466Gi**. Remotion writes intermediate JPEG
-frames to the OS temp directory and needs roughly 1–2 GB for a render this
-length. This reproduced at `--jpeg-quality=50 --concurrency=2`.
-
-**Do not treat this as a code defect and do not refactor the render path to
-chase it.** The first step is to confirm free space:
-
-```bash
-df -h /System/Volumes/Data
-```
-
-Once there is >2 GB free, the deliverable is one command:
-
-```bash
-npm run daily -- --both
-```
-
-If you must verify something while disk is still tight, render a frame range
-instead — this is known to work:
+Remotion writes intermediate JPEG frames to the OS temp directory and needs
+roughly 1–2 GB for a 1424-frame render. An earlier attempt died at ~frame 1100
+with `ENOSPC` when the machine had 394 MB free. If a render fails that way it is
+**not a code defect** — check `df -h /System/Volumes/Data` before touching the
+render path. To verify something while disk is tight, render a frame range:
 
 ```bash
 npx remotion render StockPilotDaily out/clip.mp4 --props=data/deck.json --frames=0-150 --jpeg-quality=55
@@ -251,11 +236,11 @@ only if the repo owner asks.
 
 ## Suggested next steps
 
-1. Free disk space (owner's decision), then `npm run daily -- --both` to produce
-   the first full-length renders and confirm both formats end to end.
-2. Watch the finished MP4 for tape-loop continuity across scene cuts — the loop
-   is verified by construction and in stills, but has never been checked over a
-   full 47s playback.
-3. Optional: audio bed + a scheduled daily run. There is currently no audio and
-   no cron; `stockpilot-daily` in `~/.claude/scheduled-tasks/` schedules the
-   *pipeline*, not this renderer.
+1. **Provision Supabase and run the migration**, then `npm run sync -- --backfill
+   30` and confirm the dashboard badge flips from *Local files* to *Supabase*.
+   This is the one path in the app that has never run for real.
+2. **Deploy to Vercel** with `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` set
+   (server-side, never `NEXT_PUBLIC_`).
+3. Optional: audio bed, and a scheduled daily `npm run sync` on the pipeline
+   machine. `stockpilot-daily` in `~/.claude/scheduled-tasks/` schedules the
+   *pipeline*, not this app.
