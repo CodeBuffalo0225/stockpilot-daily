@@ -136,3 +136,25 @@ alter table public.deck_momentum  enable row level security;
 -- (anon, authenticated) is denied. If a public read-only dashboard is ever
 -- wanted, add an explicit anon select policy here and understand that it makes
 -- the allocations world-readable.
+
+-- ---------------------------------------------------------------------------
+-- Grants.
+--
+-- BYPASSRLS is NOT a table privilege: without these grants the service role
+-- authenticates fine and then fails every statement with "permission denied
+-- for table daily_decks". Granting explicitly here also keeps the migration
+-- self-contained, rather than depending on whatever default privileges happen
+-- to be configured on the target project.
+--
+-- anon and authenticated are deliberately granted nothing. RLS with no policy
+-- already denies them; withholding the grant is the second lock.
+-- ---------------------------------------------------------------------------
+
+grant usage on schema public to service_role;
+
+grant select, insert, update, delete on
+  public.daily_decks,
+  public.deck_positions,
+  public.deck_tape,
+  public.deck_momentum
+to service_role;

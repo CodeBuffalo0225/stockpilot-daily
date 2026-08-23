@@ -1,0 +1,725 @@
+<title>StockPilot Daily</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;700;800;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap">
+
+<style>
+/* StockPilot Daily — committed single-theme terminal.
+   The subject is a trading desk read at a glance in a dark room; the page
+   commits to that world rather than adapting to the host theme. Every colour is
+   painted explicitly so the page holds on either ground. */
+:root {
+  --bg:        #05070d;
+  --lift:      #0a0e18;
+  --panel:     rgba(255,255,255,0.032);
+  --edge:      rgba(255,255,255,0.085);
+  --edge-soft: rgba(255,255,255,0.045);
+  --grid:      rgba(120,150,190,0.065);
+
+  --text:  #e9eff7;
+  --dim:   #8d9cb2;
+  --faint: #4e5c71;
+
+  --buy:   #00e58c;
+  --watch: #ffb020;
+  --skip:  #ff3d5e;
+  --accent:#2ed9f0;
+
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --sans: 'Inter Tight', Inter, system-ui, -apple-system, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Instrument grid, fixed behind everything. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 68px 68px;
+  mask-image: radial-gradient(ellipse at 50% -10%, #000 25%, transparent 78%);
+  -webkit-mask-image: radial-gradient(ellipse at 50% -10%, #000 25%, transparent 78%);
+}
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ------------------------------------------------------------------ rails */
+
+.rail {
+  position: relative;
+  z-index: 2;
+  height: 44px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  background: rgba(6,10,18,0.9);
+  border-bottom: 1px solid var(--edge);
+}
+.rail--b { height: 38px; opacity: 0.68; }
+
+.rail__track {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  animation: crawl var(--dur, 70s) linear infinite;
+}
+.rail__track--rev { animation-direction: reverse; }
+.rail:hover .rail__track { animation-play-state: paused; }
+
+/* The list is rendered twice and travels exactly one list-width, so the second
+   copy lands where the first began — seamless at any content width. */
+@keyframes crawl {
+  from { transform: translate3d(0,0,0); }
+  to   { transform: translate3d(-50%,0,0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rail__track { animation: none; }
+  .rail { overflow-x: auto; }
+}
+
+.cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  height: 100%;
+  padding: 0 20px;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.cell:hover { background: rgba(255,255,255,0.055); }
+.cell[aria-pressed="true"] { background: rgba(46,217,240,0.14); }
+.pip { width: 7px; height: 7px; border-radius: 50%; flex: 0 0 auto; }
+.cell b { color: var(--text); font-weight: 700; }
+.cell i { color: var(--dim); font-style: normal; font-weight: 500; }
+
+.up { color: var(--buy); }
+.dn { color: var(--skip); }
+
+/* ----------------------------------------------------------------- shell */
+
+.shell {
+  position: relative;
+  z-index: 1;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 30px 26px 70px;
+}
+
+.top {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--edge);
+}
+
+.mark {
+  font-size: clamp(26px, 4.4vw, 40px);
+  font-weight: 900;
+  letter-spacing: -1.1px;
+  line-height: 1;
+  text-wrap: balance;
+}
+.mark span { color: var(--accent); }
+.mark em {
+  font-style: normal;
+  font-weight: 500;
+  color: var(--dim);
+  letter-spacing: -0.5px;
+}
+
+.meta {
+  margin-top: 9px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 2.4px;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.controls { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--dim);
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  border-radius: 3px;
+  padding: 8px 11px;
+}
+.chip__dot { width: 7px; height: 7px; border-radius: 50%; background: var(--buy); }
+
+select.chip {
+  appearance: none;
+  color: var(--text);
+  cursor: pointer;
+  padding-right: 26px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--dim) 50%), linear-gradient(135deg, var(--dim) 50%, transparent 50%);
+  background-position: right 12px center, right 7px center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+select.chip:hover { border-color: rgba(255,255,255,0.2); }
+select.chip option { background: var(--lift); color: var(--text); }
+
+/* ------------------------------------------------------------- scene bar */
+
+.runtime { margin: 22px 0 26px; }
+.runtime__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 2.4px;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 9px;
+}
+/* Segment widths are each scene's real share of the render, so the bar encodes
+   the timing model rather than decorating it. */
+.runtime__bar { display: flex; height: 26px; gap: 2px; }
+.seg {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--edge-soft);
+  border-top: 2px solid var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--dim);
+  white-space: nowrap;
+}
+.seg[data-key="allocation"] { border-top-color: var(--buy); }
+.seg[data-key="thesis"]     { border-top-color: var(--watch); }
+.seg[data-key="scoreboard"] { border-top-color: var(--accent); }
+.seg[data-key="verdicts"]   { border-top-color: var(--skip); }
+
+/* ------------------------------------------------------------------ grid */
+
+.cols { display: grid; grid-template-columns: minmax(0,1fr) 372px; gap: 22px; align-items: start; }
+@media (max-width: 960px) { .cols { grid-template-columns: minmax(0,1fr); } }
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  border-radius: 4px;
+  padding: 18px 20px;
+}
+.card + .card { margin-top: 16px; }
+.card__h {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 2.6px;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin: 0 0 14px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.screen {
+  background: #000;
+  border: 1px solid var(--edge);
+  border-radius: 4px;
+  padding: 14px;
+  display: flex;
+  justify-content: center;
+}
+.screen video { width: 100%; max-width: 330px; display: block; border-radius: 2px; }
+
+.standin {
+  width: 100%;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  padding: 30px 22px;
+  color: var(--faint);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 1.4px;
+  line-height: 1.8;
+}
+.standin strong { color: var(--dim); font-weight: 700; display: block; }
+
+/* ------------------------------------------------------------------ data */
+
+.tiles { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+.tile { border: 1px solid var(--edge-soft); border-radius: 3px; padding: 12px 13px; }
+.tile__n { font-family: var(--mono); font-size: 27px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.tile__l { font-family: var(--mono); font-size: 9.5px; letter-spacing: 2px; color: var(--faint); margin-top: 7px; text-transform: uppercase; }
+
+.prop { display: flex; height: 6px; margin-top: 14px; border-radius: 2px; overflow: hidden; background: rgba(255,255,255,0.05); }
+
+.line {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--edge-soft);
+}
+.line:last-child { border-bottom: 0; }
+.line__t { font-weight: 800; font-size: 14.5px; letter-spacing: 0.2px; min-width: 58px; }
+.line__s { font-family: var(--mono); font-size: 10.5px; color: var(--faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.line__v { margin-left: auto; font-family: var(--mono); font-weight: 700; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+
+.tier {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  padding: 3px 6px;
+  border-radius: 2px;
+  border: 1px solid currentColor;
+  flex: 0 0 auto;
+}
+
+.meter { flex: 1; min-width: 60px; height: 6px; border-radius: 2px; background: rgba(255,255,255,0.06); overflow: hidden; display: block; }
+.meter > span { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--buy)); }
+
+.read { font-size: 15.5px; line-height: 1.65; color: var(--text); margin: 0; max-width: 66ch; }
+
+.none { font-family: var(--mono); font-size: 11.5px; color: var(--faint); padding: 8px 0; letter-spacing: 1.2px; }
+
+/* --------------------------------------------------------------- detail */
+
+.detail {
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  background: rgba(46,217,240,0.055);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.detail__h { display: flex; align-items: center; gap: 11px; }
+.detail__t { font-size: 19px; font-weight: 900; letter-spacing: 0.2px; }
+.detail__x { margin-left: auto; background: none; border: 0; color: var(--faint); font-size: 19px; line-height: 1; cursor: pointer; padding: 0 3px; }
+.detail__x:hover { color: var(--text); }
+.detail p { margin: 9px 0 0; font-size: 13px; line-height: 1.55; color: var(--dim); }
+.detail p b { font-weight: 700; }
+
+/* ------------------------------------------------------------------ foot */
+
+.foot {
+  margin-top: 34px;
+  padding-top: 18px;
+  border-top: 1px solid var(--edge);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  line-height: 1.9;
+  letter-spacing: 1.1px;
+  color: var(--faint);
+  text-transform: uppercase;
+}
+.foot b { color: var(--dim); font-weight: 700; }
+
+@media (max-width: 620px) {
+  .shell { padding: 22px 15px 50px; }
+  .tiles { grid-template-columns: repeat(3,1fr); }
+  .tile__n { font-size: 22px; }
+  .cell { padding: 0 14px; font-size: 11.5px; }
+  .read { font-size: 14.5px; }
+  .seg { font-size: 0; }
+}
+</style>
+
+<div class="rail" id="railA"></div>
+<div class="rail rail--b" id="railB"></div>
+
+<main class="shell">
+  <header class="top">
+    <div>
+      <div class="mark">STOCK<span>PILOT</span> <em>Daily</em></div>
+      <div class="meta" id="meta"></div>
+    </div>
+    <div class="controls">
+      <span class="chip"><span class="chip__dot"></span><span id="srcLabel">—</span></span>
+      <select class="chip" id="day" aria-label="Trading day"></select>
+    </div>
+  </header>
+
+  <section class="runtime">
+    <div class="runtime__head">
+      <span>Rendered brief — scene timeline</span>
+      <span id="rtTotal"></span>
+    </div>
+    <div class="runtime__bar" id="rtBar"></div>
+  </section>
+
+  <div class="cols">
+    <section>
+      <div class="screen" id="screen"></div>
+      <div class="card" id="readCard">
+        <h2 class="card__h"><span>The read</span></h2>
+        <p class="read" id="read"></p>
+      </div>
+    </section>
+
+    <aside>
+      <div id="detail"></div>
+
+      <div class="card">
+        <h2 class="card__h"><span>The board</span><span id="boardMeta"></span></h2>
+        <div class="tiles" id="tiles"></div>
+        <div class="prop" id="prop"></div>
+      </div>
+
+      <div class="card">
+        <h2 class="card__h"><span>Allocation</span><span id="allocMeta"></span></h2>
+        <div id="alloc"></div>
+      </div>
+
+      <div class="card">
+        <h2 class="card__h"><span>Momentum</span><span>63-day</span></h2>
+        <div id="mom"></div>
+      </div>
+
+      <div class="card">
+        <h2 class="card__h"><span>Rotation watch</span><span id="rotMeta"></span></h2>
+        <div id="rot"></div>
+      </div>
+    </aside>
+  </div>
+
+  <footer class="foot" id="foot"></footer>
+</main>
+
+<script>
+const DECKS = __PAYLOAD__;
+const VIDEO_DATE = __VIDEO_DATE__;
+
+const $ = (id) => document.getElementById(id);
+const el = (tag, cls, txt) => {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (txt != null) n.textContent = txt;
+  return n;
+};
+
+const vColor = (v) => v === 'BUY' ? 'var(--buy)' : v === 'WATCH' ? 'var(--watch)' : v === 'SKIP' ? 'var(--skip)' : 'var(--faint)';
+const pct = (n, d = 1) => n == null ? '—' : (n >= 0 ? '+' : '') + n.toFixed(d) + '%';
+const price = (n) => n == null ? '—' : n.toFixed(2);
+
+const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+const DAYS = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+function longDate(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  const dow = DAYS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
+  return dow + ' ' + String(d).padStart(2, '0') + ' ' + MONTHS[m - 1] + ' ' + y;
+}
+const SRC = {
+  'local+notion': 'Pipeline + Notion',
+  'local': 'Pipeline report',
+  'notion': 'Notion log',
+  'fixture': 'Sample data'
+};
+
+let current = DECKS[0];
+let picked = null;
+
+/* ------------------------------------------------------------------ rails */
+
+function cellNode(item) {
+  const b = el('button', 'cell');
+  b.type = 'button';
+  b.setAttribute('aria-pressed', String(picked === item.ticker));
+  const pip = el('span', 'pip');
+  pip.style.background = vColor(item.verdict);
+  if (!item.verdict) pip.style.opacity = '0.4';
+  b.append(pip, el('b', null, item.ticker));
+  if (item.price != null) b.append(el('i', null, price(item.price)));
+  if (item.changePct != null) {
+    b.append(el('span', item.changePct >= 0 ? 'up' : 'dn', pct(item.changePct)));
+  }
+  b.addEventListener('click', () => {
+    picked = picked === item.ticker ? null : item.ticker;
+    renderDetail();
+    syncPressed();
+  });
+  return b;
+}
+
+function buildRail(node, items, reverse) {
+  node.replaceChildren();
+  const track = el('div', 'rail__track' + (reverse ? ' rail__track--rev' : ''));
+  track.style.setProperty('--dur', Math.max(items.length * 2.5, 20) + 's');
+  // Two copies: the animation travels exactly one copy's width.
+  for (let copy = 0; copy < 2; copy++) {
+    items.forEach((item) => {
+      const c = cellNode(item);
+      if (copy === 1) { c.setAttribute('aria-hidden', 'true'); c.tabIndex = -1; }
+      track.append(c);
+    });
+  }
+  node.append(track);
+}
+
+function syncPressed() {
+  document.querySelectorAll('.cell').forEach((c) => {
+    const t = c.querySelector('b').textContent;
+    c.setAttribute('aria-pressed', String(picked === t));
+  });
+}
+
+/* ---------------------------------------------------------------- panels */
+
+function renderDetail() {
+  const host = $('detail');
+  host.replaceChildren();
+  if (!picked) return;
+
+  const tape = current.tape.find((t) => t.ticker === picked);
+  const pos = current.allocation.find((p) => p.ticker === picked);
+  const mom = current.momentum.find((m) => m.ticker === picked);
+  const wat = current.watches.find((w) => w.ticker === picked);
+  const verdict = tape?.verdict ?? (current.skips.includes(picked) ? 'SKIP' : null);
+
+  const box = el('div', 'detail');
+  const head = el('div', 'detail__h');
+  head.append(el('span', 'detail__t', picked));
+
+  const tag = el('span', 'tier', verdict ?? 'NOT SCORED');
+  tag.style.color = vColor(verdict);
+  head.append(tag);
+
+  const x = el('button', 'detail__x', '×');
+  x.type = 'button';
+  x.setAttribute('aria-label', 'Close ' + picked);
+  x.addEventListener('click', () => { picked = null; renderDetail(); syncPressed(); });
+  head.append(x);
+  box.append(head);
+
+  const bits = [];
+  if (tape?.price != null) bits.push('Last ' + price(tape.price));
+  if (tape?.changePct != null) bits.push('21d ' + pct(tape.changePct));
+  if (mom) bits.push('Score ' + mom.momentumScore.toFixed(1), '63d ' + pct(mom.ret63d, 0));
+  if (bits.length) box.append(el('p', null, bits.join('  ·  ')));
+
+  if (pos) {
+    const p = el('p');
+    p.append(el('b', null, 'TIER ' + pos.tier + ' · ' + pos.positionPct + '%  '));
+    if (pos.entryNote) p.append(document.createTextNode(pos.entryNote));
+    box.append(p);
+  }
+  if (pos?.stopNote) {
+    const p = el('p');
+    const b = el('b', null, 'STOP ');
+    b.style.color = 'var(--skip)';
+    p.append(b, document.createTextNode(pos.stopNote));
+    box.append(p);
+  }
+  if (!pos && wat?.note) box.append(el('p', null, wat.note));
+
+  host.append(box);
+}
+
+function renderRuntime() {
+  const bar = $('rtBar');
+  bar.replaceChildren();
+  const total = current.timeline.total || 1;
+  current.timeline.scenes.forEach((s) => {
+    const seg = el('div', 'seg', s.id);
+    seg.dataset.key = s.id;
+    seg.style.flex = s.duration + ' 0 0';
+    seg.title = s.id + ' — ' + (s.duration / 30).toFixed(1) + 's';
+    bar.append(seg);
+  });
+  $('rtTotal').textContent =
+    (total / 30).toFixed(1) + 's · ' + total + ' frames · ' + current.timeline.scenes.length + ' scenes';
+}
+
+function renderScreen() {
+  const host = $('screen');
+  host.replaceChildren();
+  if (current.date === VIDEO_DATE && window.__VIDEO_SRC__) {
+    const v = document.createElement('video');
+    v.src = window.__VIDEO_SRC__;
+    v.controls = true;
+    v.playsInline = true;
+    v.preload = 'metadata';
+    // Frame 0 is a fade-in from black, which reads as a broken panel. Park the
+    // poster a few seconds in, on a frame that actually shows the brief.
+    v.addEventListener('loadedmetadata', () => {
+      if (v.currentTime === 0) { try { v.currentTime = 9.5; } catch (e) {} }
+    }, { once: true });
+    host.append(v);
+  } else {
+    const s = el('div', 'standin');
+    s.append(el('strong', null, 'RENDER NOT BUNDLED'));
+    s.append(el('span', null,
+      'This preview ships one encoded brief — ' + VIDEO_DATE + '.'
+    ));
+    s.append(el('span', null,
+      current.date + ' would render ' + current.timeline.scenes.length + ' scenes over ' +
+      (current.timeline.total / 30).toFixed(1) + 's.'
+    ));
+    host.append(s);
+  }
+}
+
+function renderPanels() {
+  const c = current.counts;
+  const total = Math.max(c.buy + c.watch + c.skip, 1);
+
+  $('meta').textContent =
+    longDate(current.date) + '  ·  ' + c.screened + ' screened  ·  ' + current.unansweredCount + ' questions logged';
+  $('srcLabel').textContent = SRC[current.source] ?? current.source;
+
+  const tiles = $('tiles');
+  tiles.replaceChildren();
+  [['BUY', c.buy, 'var(--buy)'], ['WATCH', c.watch, 'var(--watch)'], ['SKIP', c.skip, 'var(--skip)']]
+    .forEach(([label, n, col]) => {
+      const t = el('div', 'tile');
+      t.style.borderColor = col + '44';
+      const num = el('div', 'tile__n', String(n));
+      num.style.color = col;
+      t.append(num, el('div', 'tile__l', label));
+      tiles.append(t);
+    });
+
+  const prop = $('prop');
+  prop.replaceChildren();
+  [[c.buy, 'var(--buy)'], [c.watch, 'var(--watch)'], [c.skip, 'var(--skip)']].forEach(([n, col]) => {
+    const d = el('div');
+    d.style.width = (n / total * 100) + '%';
+    d.style.background = col;
+    prop.append(d);
+  });
+  $('boardMeta').textContent = 'cap 3/day';
+
+  // allocation
+  const alloc = $('alloc');
+  alloc.replaceChildren();
+  $('allocMeta').textContent = current.allocation.length
+    ? current.allocation.reduce((s, p) => s + p.positionPct, 0).toFixed(1) + '% deployed'
+    : '';
+  if (!current.allocation.length) {
+    alloc.append(el('div', 'none', 'No positions this day.'));
+  } else {
+    current.allocation.forEach((p) => {
+      const r = el('div', 'line');
+      const t = el('span', 'line__t', p.ticker);
+      const tier = el('span', 'tier', 'T' + p.tier);
+      tier.style.color = 'var(--buy)';
+      const v = el('span', 'line__v', p.positionPct + '%');
+      v.style.color = 'var(--buy)';
+      r.append(t, tier, el('span', 'line__s', p.sector ?? ''), v);
+      r.style.cursor = 'pointer';
+      r.addEventListener('click', () => { picked = p.ticker; renderDetail(); syncPressed(); });
+      alloc.append(r);
+    });
+  }
+
+  // momentum
+  const mom = $('mom');
+  mom.replaceChildren();
+  if (!current.momentum.length) {
+    mom.append(el('div', 'none', 'No momentum screen this day.'));
+  } else {
+    const max = Math.max.apply(null, current.momentum.map((m) => m.momentumScore));
+    current.momentum.forEach((m) => {
+      const r = el('div', 'line');
+      const meter = el('span', 'meter');
+      const fill = el('span');
+      fill.style.width = (m.momentumScore / max * 100) + '%';
+      meter.append(fill);
+      const v = el('span', 'line__v', pct(m.ret63d, 0));
+      v.style.color = (m.ret63d ?? 0) >= 0 ? 'var(--buy)' : 'var(--skip)';
+      r.append(el('span', 'line__t', m.ticker), meter, v);
+      r.style.cursor = 'pointer';
+      r.addEventListener('click', () => { picked = m.ticker; renderDetail(); syncPressed(); });
+      mom.append(r);
+    });
+  }
+
+  // rotation
+  const rot = $('rot');
+  rot.replaceChildren();
+  $('rotMeta').textContent = current.rotations.flagged + ' flagged';
+  if (!current.rotations.suggestions.length) {
+    rot.append(el('div', 'none', 'No swaps suggested.'));
+  } else {
+    current.rotations.suggestions.forEach((s) => {
+      const r = el('div', 'line');
+      const out = el('span', 'line__t', s.tickerOut);
+      out.style.color = 'var(--skip)';
+      const into = el('span', 'line__t', s.topCandidate ?? '—');
+      into.style.color = 'var(--buy)';
+      r.append(out, el('span', 'line__s', '→'), into);
+      rot.append(r);
+    });
+  }
+
+  // thesis
+  $('readCard').style.display = current.thesis ? '' : 'none';
+  $('read').textContent = current.thesis;
+
+  $('foot').innerHTML =
+    '<b>StockPilot Daily</b> — automated research output. Not investment advice, not a recommendation, ' +
+    'and not a solicitation to buy or sell any security.<br>' +
+    'Source for ' + current.date + ': <b>' + (SRC[current.source] ?? current.source) + '</b>. ' +
+    'Momentum, outcomes and rotations exist only in the pipeline report — a Notion-only day renders them empty rather than guessing.';
+}
+
+function show(date) {
+  current = DECKS.find((d) => d.date === date) ?? DECKS[0];
+  picked = null;
+  buildRail($('railA'), current.tape, false);
+  buildRail($('railB'), current.tape.slice().reverse(), true);
+  renderRuntime();
+  renderScreen();
+  renderPanels();
+  renderDetail();
+}
+
+const sel = $('day');
+DECKS.forEach((d) => {
+  const o = document.createElement('option');
+  o.value = d.date;
+  o.textContent = d.date + (d.date === VIDEO_DATE ? '  ▶' : '');
+  sel.append(o);
+});
+sel.addEventListener('change', (e) => show(e.target.value));
+
+show(DECKS[0].date);
+</script>

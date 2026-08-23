@@ -1,7 +1,7 @@
 {
   "name": "stockpilot-daily",
   "version": "1.0.0",
-  "description": "StockPilot Daily — the daily agent run, rendered as a broadcast-style video",
+  "description": "StockPilot Daily \u2014 the daily agent run, rendered as a broadcast-style video",
   "repository": {},
   "license": "UNLICENSED",
   "private": true,
@@ -27,23 +27,30 @@
     "@types/web": "0.0.166",
     "eslint": "9.19.0",
     "prettier": "3.8.1",
+    "supabase": "2.115.0",
     "tsx": "4.19.2",
     "typescript": "5.9.3"
   },
   "scripts": {
     "dev": "next dev",
-    "deck": "tsx src/spine/fetch-deck.ts",
-    "daily": "tsx scripts/daily.ts",
-    "render": "remotion render StockPilotDaily out/stockpilot-vertical.mp4 --props=data/deck.json",
-    "render:landscape": "remotion render StockPilotDailyLandscape out/stockpilot-landscape.mp4 --props=data/deck.json",
+    "studio": "remotion studio",
     "build": "next build",
-    "upgrade": "remotion upgrade",
+    "start": "next start",
     "lint": "eslint src scripts components app && tsc",
     "check": "tsx scripts/check-sources.ts",
     "sync": "tsx scripts/sync.ts",
-    "studio": "remotion studio",
-    "start": "next start",
-    "bundle": "remotion bundle"
+    "daily": "tsx scripts/daily.ts",
+    "deck": "tsx src/spine/fetch-deck.ts",
+    "render": "remotion render StockPilotDaily out/stockpilot-vertical.mp4 --props=data/deck.json",
+    "render:landscape": "remotion render StockPilotDailyLandscape out/stockpilot-landscape.mp4 --props=data/deck.json",
+    "artifact": "tsx scripts/build-artifact.ts",
+    "db:start": "supabase start",
+    "db:env": "./scripts/use-local-supabase.sh",
+    "db:status": "supabase status",
+    "db:reset": "supabase db reset",
+    "db:stop": "supabase stop",
+    "bundle": "remotion bundle",
+    "upgrade": "remotion upgrade"
   },
   "sideEffects": [
     "*.css"

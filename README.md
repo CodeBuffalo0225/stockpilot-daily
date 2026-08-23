@@ -18,12 +18,28 @@ ticker, both video formats — renders from that one validated record.
 
 ## Quick start
 
+Without a database — runs on local deck files, good enough to see everything:
+
 ```bash
 npm install
-cp .env.example .env.local     # optional; runs on local files without it
-npm run sync -- --backfill 20  # pull decks from the pipeline
-npm run dev                    # http://localhost:3000
+npm run sync -- --backfill 20   # pull decks from the pipeline
+npm run dev                     # http://localhost:3000
 ```
+
+With a real database — a full Supabase stack on your machine (needs Docker):
+
+```bash
+npm install
+npm run db:start                # boots Postgres + PostgREST, applies migrations
+npm run db:env                  # writes .env.local, never printing the key
+npm run sync -- --backfill 20   # now writes to Postgres
+npm run dev                     # badge reads "Supabase"
+```
+
+`npm run db:stop` shuts it down; `npm run db:reset` reapplies migrations from
+scratch. The local stack is the same Postgres and PostgREST that Supabase runs
+in production, so the code path the app takes is identical — only the URL and
+key differ.
 
 | Command | Does |
 |---|---|
@@ -35,6 +51,9 @@ npm run dev                    # http://localhost:3000
 | `npm run studio` | Remotion Studio |
 | `npm run check` | verify all three spine source paths |
 | `npm run build` | production Next build |
+| `npm run artifact` | build the self-contained shareable preview |
+| `npm run db:start` / `db:stop` | local Supabase stack (Docker) |
+| `npm run db:env` | point `.env.local` at the local stack |
 | `npm run lint` | eslint + tsc |
 
 ## The spine

@@ -68,7 +68,16 @@ that dies with `ENOSPC` is a disk problem, not a code problem — check
 
 Both formats last rendered clean on 2026-08-19: 1424 frames, 47.51s.
 
-## Unverified
+## Verified / unverified
 
-The Supabase code paths have never run against a real project — no credentials
-on this machine. Everything tested so far used the local-file fallback.
+Supabase runs for real against the **local** stack (`npm run db:start`) —
+migration applies, 12 decks sync, re-sync is idempotent, the dashboard reads
+from Postgres, and the production build serves it with no credential in the
+client bundle. It has **never** run against hosted Supabase, and it has never
+been deployed to Vercel.
+
+Two bugs only surfaced by running it: `store.ts` read `process.env` at module
+scope (ESM hoisting meant the CLI's dotenv ran too late, so syncs silently fell
+back to local files), and the migration granted no table privileges to
+`service_role` (`BYPASSRLS` is not a grant). Both fixed — do not reintroduce
+either pattern.

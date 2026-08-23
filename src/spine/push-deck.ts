@@ -30,7 +30,7 @@ export async function pushDeck(deck: DailyDeck, projectRoot: string): Promise<Pu
     momentum: deck.momentum.length,
   };
 
-  if (storeKind === 'local') {
+  if (storeKind() === 'local') {
     return { target: 'local', date: deck.date, rows };
   }
 

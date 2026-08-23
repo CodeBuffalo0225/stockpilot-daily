@@ -19,29 +19,52 @@ import { DailyDeck } from './schema';
 
 export type StoreKind = 'supabase' | 'local';
 
-const url = process.env.SUPABASE_URL;
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// Read the environment on every call rather than once at module load.
+//
+// ESM hoists imports above module-level statements, so a CLI that calls
+// dotenv.config() before importing this file still has its imports evaluated
+// FIRST. Capturing process.env at load time made every script silently fall
+// back to local files even with .env.local present — the store reported
+// "Local files" while the operator believed they were writing to Postgres.
+// Lazy reads make the behaviour independent of import order.
+const readEnv = () => ({
+  url: process.env.SUPABASE_URL?.trim() || undefined,
+  key: process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || undefined,
+});
 
-export const storeKind: StoreKind = url && serviceKey ? 'supabase' : 'local';
+export function storeKind(): StoreKind {
+  const { url, key } = readEnv();
+  return url && key ? 'supabase' : 'local';
+}
 
 let client: SupabaseClient | null = null;
+let clientUrl: string | null = null;
+
 export function supabase(): SupabaseClient {
-  if (!url || !serviceKey) {
+  const { url, key } = readEnv();
+  if (!url || !key) {
     throw new Error('Supabase is not configured (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY).');
   }
-  client ??= createClient(url, serviceKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  // Rebuild if the target moved, so a re-pointed env cannot be served by a
+  // client still aimed at the previous project.
+  if (!client || clientUrl !== url) {
+    client = createClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    clientUrl = url;
+  }
   return client;
 }
 
 export function describeStore() {
+  const { url } = readEnv();
+  const kind = storeKind();
   return {
-    kind: storeKind,
-    label: storeKind === 'supabase' ? 'Supabase' : 'Local files',
+    kind,
+    label: kind === 'supabase' ? 'Supabase' : 'Local files',
     detail:
-      storeKind === 'supabase'
-        ? new URL(url as string).host
+      kind === 'supabase' && url
+        ? new URL(url).host
         : 'data/ — set SUPABASE_URL to use the database',
   };
 }
@@ -93,7 +116,7 @@ async function localDecks(): Promise<DailyDeck[]> {
 // ---------------------------------------------------------------------------
 
 export async function listDecks(limit = 60): Promise<DeckSummary[]> {
-  if (storeKind === 'local') {
+  if (storeKind() === 'local') {
     return (await localDecks()).slice(0, limit).map((d) => ({
       date: d.date,
       source: d.source,
@@ -125,16 +148,17 @@ export async function listDecks(limit = 60): Promise<DeckSummary[]> {
 }
 
 export async function getDeck(date?: string): Promise<DailyDeck | null> {
-  if (storeKind === 'local') {
+  if (storeKind() === 'local') {
     const all = await localDecks();
     if (all.length === 0) return null;
     return (date ? all.find((d) => d.date === date) : all[0]) ?? null;
   }
 
-  let q = supabase().from('daily_decks').select('deck').order('date', { ascending: false }).limit(1);
-  if (date) q = supabase().from('daily_decks').select('deck').eq('date', date).limit(1);
-
-  const { data, error } = await q;
+  const base = supabase().from('daily_decks').select('deck');
+  const { data, error } = await (date
+    ? base.eq('date', date)
+    : base.order('date', { ascending: false })
+  ).limit(1);
   if (error) throw new Error(`getDeck: ${error.message}`);
   if (!data?.length) return null;
 

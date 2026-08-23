@@ -31,7 +31,7 @@ The app has three faces over one `DailyDeck` record: the Next.js dashboard with
 a live ticker UX, the Remotion Player embedded in it, and the Remotion CLI that
 renders MP4s.
 
-## State at handoff (2026-08-19)
+## State at handoff (2026-08-22)
 
 Everything below is verified, not assumed.
 
@@ -49,10 +49,19 @@ Everything below is verified, not assumed.
 - ✅ `npm run build` (Next production build) passes.
 - ✅ Dashboard verified in a real browser: playback, format toggle, day
   switching, ticker click-through, mobile at 375px with no horizontal overflow.
-- ⚠️ Supabase has never been exercised against a real project — there were no
-  credentials on this machine. The Supabase code paths are written and typed but
-  **unrun**. The local-file fallback is what has actually been tested. Treat the
-  first real `npm run sync` against Supabase as unverified and watch it closely.
+- ✅ **Supabase exercised for real** against a local stack (`npm run db:start`):
+  migration applies, 12 decks + 57 positions + 322 tape rows + 88 momentum rows
+  written through `supabase-js`, re-sync confirmed idempotent, dashboard reads
+  from Postgres, production build serves it.
+- ✅ No credential leak: the served HTML and every static bundle were checked
+  for the service role key, the project URL, any JWT-shaped token, and the
+  string `service_role`. All absent.
+- ⚠️ Never run against **hosted** Supabase — only the local stack, which is the
+  same Postgres + PostgREST but not the same network, TLS, or connection limits.
+- ⚠️ Not deployed to Vercel. Requires the owner's login.
+
+Two bugs were found by running it that reading could not have caught, both now
+fixed — see the data-layer rules below.
 
 ### Rendering needs disk headroom
 
@@ -73,15 +82,23 @@ Report what is large and let the owner decide.
 ## Commands
 
 ```bash
-npm run daily                 # pull latest deck + render vertical
-npm run daily -- 2026-08-17   # a specific date
-npm run daily -- --both       # vertical + landscape
-npm run daily -- --landscape  # landscape only
-npm run deck                  # pull deck only -> data/deck.json (no render)
-npm run check                 # exercise all three source paths
-npm run dev                   # Remotion Studio
+npm run dev                   # Next.js dashboard — NOT Remotion Studio
+npm run studio                # Remotion Studio
+npm run db:start              # local Supabase stack (Docker) + applies migrations
+npm run db:env                # write .env.local from the running stack
+npm run db:reset              # reapply migrations from scratch (wipes data)
+npm run db:stop               # shut the stack down
+npm run sync -- --backfill 20 # spine -> Supabase + data/decks/
+npm run daily -- --both       # pull + render MP4, vertical and landscape
+npm run artifact              # build the shareable single-file preview
+npm run check                 # exercise all three spine source paths
+npm run build                 # production Next build
 npm run lint                  # eslint + tsc  <- run before every commit
 ```
+
+After `npm run db:reset` the database is empty — re-run `npm run sync` to
+repopulate. There is deliberately no `seed.sql`: the decks in `data/decks/` are
+the mirror, and a checked-in seed would go stale against them.
 
 Renders land in `out/stockpilot-<date>-<format>.mp4`. Keep review stills in
 `out/stills/`.
@@ -148,6 +165,34 @@ confirmed data it never held.
   can reach Notion but not `~/Documents/stockpilot`, so a cron there would
   silently produce decks with no momentum, outcomes or rotations. There is no
   Vercel cron for this reason — do not add one without solving that.
+
+## Data layer rules
+
+- **Never read `process.env` at module scope in the spine.** ESM hoists imports
+  above a CLI's `dotenv.config()`, so a module-level capture runs FIRST and sees
+  nothing. This silently made every sync fall back to local files while
+  reporting success. `store.ts` reads the environment lazily on each call; keep
+  it that way.
+- **`BYPASSRLS` is not a table privilege.** The service role authenticates fine
+  and then fails every statement with `permission denied for table daily_decks`
+  unless the migration grants explicitly. `0001_init.sql` grants to
+  `service_role` and deliberately grants nothing to `anon`/`authenticated` — RLS
+  with no policy already denies them, and withholding the grant is the second
+  lock.
+- **Never import `src/spine/store.ts` or `push-deck.ts` into a client
+  component.** They read `node:fs` and the service role key. (`server-only` is
+  deliberately NOT used — the sync CLI imports these outside Next's bundler,
+  where that package throws.)
+- **`SUPABASE_SERVICE_ROLE_KEY` must never be prefixed `NEXT_PUBLIC_`,** and
+  never print it. `scripts/use-local-supabase.sh` writes `.env.local` from a
+  pipe so the value never reaches a terminal or transcript.
+- Decks are re-validated with Zod on the way OUT of Supabase as well as in — the
+  column is `jsonb` and a hand-edit in the dashboard is exactly what puts a
+  broken deck in front of the renderer.
+- `npm run sync` must run on the machine holding the pipeline reports. Vercel
+  can reach Notion but not `~/Documents/stockpilot`, so a cron there would
+  silently produce decks with no momentum, outcomes or rotations. That is why
+  there is no Vercel cron — do not add one without solving it.
 
 ## Non-obvious constraints — read before editing
 
@@ -236,9 +281,10 @@ only if the repo owner asks.
 
 ## Suggested next steps
 
-1. **Provision Supabase and run the migration**, then `npm run sync -- --backfill
-   30` and confirm the dashboard badge flips from *Local files* to *Supabase*.
-   This is the one path in the app that has never run for real.
+1. **Point it at a hosted Supabase project** — create one, run
+   `supabase/migrations/0001_init.sql` in its SQL editor, put its URL and
+   service role key in `.env.local`, then `npm run sync -- --backfill 30`. The
+   local stack proves the code; only this proves the network path.
 2. **Deploy to Vercel** with `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` set
    (server-side, never `NEXT_PUBLIC_`).
 3. Optional: audio bed, and a scheduled daily `npm run sync` on the pipeline
