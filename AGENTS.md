@@ -2,8 +2,10 @@
 
 Codex guidance and handoff for this repository. Read this before touching files.
 
-> Companion file: `CLAUDE.md` holds the same rules for Claude Code. If you
-> change a rule here that is also stated there, change both.
+> Companion files: `CLAUDE.md` holds the same rules for Claude Code — if you
+> change a rule here that is also stated there, change both. **`DEPLOY.md` is
+> the runbook for shipping to Vercel + hosted Supabase**; read it before
+> attempting a deploy, not this file.
 
 ## What this repo is
 
@@ -281,12 +283,10 @@ only if the repo owner asks.
 
 ## Suggested next steps
 
-1. **Point it at a hosted Supabase project** — create one, run
-   `supabase/migrations/0001_init.sql` in its SQL editor, put its URL and
-   service role key in `.env.local`, then `npm run sync -- --backfill 30`. The
-   local stack proves the code; only this proves the network path.
-2. **Deploy to Vercel** with `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` set
-   (server-side, never `NEXT_PUBLIC_`).
+1. **Deploy — follow `DEPLOY.md`.** It covers the hosted Supabase project, the
+   Vercel env vars, the credential-leak check, and the one step that cannot be
+   done from a cloud agent: populating the database from the pipeline reports on
+   the owner's laptop.
 3. Optional: audio bed, and a scheduled daily `npm run sync` on the pipeline
    machine. `stockpilot-daily` in `~/.claude/scheduled-tasks/` schedules the
    *pipeline*, not this app.
