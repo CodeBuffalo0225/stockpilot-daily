@@ -112,6 +112,14 @@ Both return 0 on the verified local production build. A non-zero result means a
 credential is being serialized into the page — stop and fix before sharing the
 URL.
 
+**Optional — `QUIZ_URL`.** The public investor-quiz URL, e.g.
+`https://investor-quiz-eight.vercel.app/?src=daily`. With it set, the board invites
+visitors with no lens to take the profile. It is read at request time, so it does
+not need a rebuild — but it is also not `NEXT_PUBLIC_`, and must not become so.
+
+Then give investor-quiz this deployment's URL as its `STOCKPILOT_DAILY_URL`, so
+quiz results link back here with `?lens=`.
+
 ---
 
 ## 4. Populating the database — the part that needs the owner's machine

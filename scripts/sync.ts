@@ -3,6 +3,7 @@
 //   npm run sync              # latest date
 //   npm run sync 2026-08-17
 //   npm run sync -- --backfill 20   # last N local report dates
+//   npm run sync -- --local ...     # data/decks/ only, database untouched
 //
 // Writes to Supabase when configured, and always mirrors to data/decks/.
 
@@ -19,6 +20,16 @@ dotenv.config({
 });
 dotenv.config({ path: join(projectRoot, '.env.local'), override: true });
 dotenv.config({ path: join(projectRoot, '.env'), override: true });
+
+// --local skips the database and mirrors to data/decks/ only. The local Supabase
+// stack needs Docker; when it is down, a configured-but-unreachable URL makes every
+// write fail. The dashboard reads data/decks/ whenever SUPABASE_URL is unset, so this
+// is enough to bring a new day in. Safe here because the store reads the environment
+// lazily on each call rather than at import time.
+if (process.argv.includes('--local')) {
+  delete process.env.SUPABASE_URL;
+  delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+}
 
 import { fetchDeck } from '../src/spine/fetch-deck';
 import { pushDeck } from '../src/spine/push-deck';

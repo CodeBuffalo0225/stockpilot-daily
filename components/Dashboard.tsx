@@ -1,12 +1,14 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { Player } from '@remotion/player';
 import { StockPilotDaily } from '../src/video/StockPilotDaily';
 import { buildTimeline } from '../src/video/timing';
 import type { DailyDeck } from '../src/spine/schema';
+import type { LensView, Foldable } from '../src/lens/lens';
 import { TickerRail } from './TickerRail';
+import { LensPanel, LensInvite } from './LensPanel';
 
 const FPS = 30;
 
@@ -16,16 +18,56 @@ const pct = (n: number | null, digits = 1) =>
 const verdictVar = (v: string | null) =>
   v === 'BUY' ? 'var(--buy)' : v === 'WATCH' ? 'var(--watch)' : v === 'SKIP' ? 'var(--skip)' : 'var(--text-faint)';
 
+/**
+ * A rail card that a lens can fold. Folded cards keep their data one click away -
+ * a lens decides emphasis, it never hides the board from anyone.
+ */
+function Panel({ title, fold, children }: { title: string; fold: boolean; children: ReactNode }) {
+  if (fold) {
+    return (
+      <details className="card fold">
+        <summary>
+          {title}
+          <span className="fold__why">folded for your profile</span>
+        </summary>
+        {children}
+      </details>
+    );
+  }
+  return (
+    <div className="card">
+      <h2 className="card__title">{title}</h2>
+      {children}
+    </div>
+  );
+}
+
 export function Dashboard({
   deck,
   dates,
   store,
+  lens,
+  quizUrl,
 }: {
   deck: DailyDeck;
   dates: string[];
   store: { kind: string; label: string; detail: string };
+  lens: LensView | null;
+  quizUrl: string | null;
 }) {
   const router = useRouter();
+  const folded = (f: Foldable) => lens?.fold.includes(f) ?? false;
+
+  // Switching days keeps the lens. Without this the date picker silently dropped
+  // ?lens= and the reader fell back to the untailored board.
+  const hrefFor = (date: string) => {
+    const q = new URLSearchParams({ date });
+    if (lens) {
+      q.set('lens', lens.key);
+      if (lens.ai) q.set('ai', lens.ai);
+    }
+    return `/?${q}`;
+  };
   const [format, setFormat] = useState<'vertical' | 'landscape'>('vertical');
   const [selected, setSelected] = useState<string | null>(null);
 
@@ -78,7 +120,7 @@ export function Dashboard({
             <select
               className="btn"
               value={deck.date}
-              onChange={(e) => router.push(`/?date=${e.target.value}`)}
+              onChange={(e) => router.push(hrefFor(e.target.value))}
               aria-label="Trading day"
             >
               {dates.map((d) => (
@@ -93,6 +135,12 @@ export function Dashboard({
         <div className="grid">
           {/* ------------------------------------------------------ stage */}
           <section>
+            {lens ? (
+              <LensPanel view={lens} clearHref={`/?date=${deck.date}`} />
+            ) : (
+              quizUrl && <LensInvite quizUrl={quizUrl} />
+            )}
+
             <div className="toolbar">
               {(['vertical', 'landscape'] as const).map((f) => (
                 <button
@@ -223,8 +271,7 @@ export function Dashboard({
               ))}
             </div>
 
-            <div className="card">
-              <h2 className="card__title">Momentum</h2>
+            <Panel title="Momentum" fold={folded('momentum')}>
               {deck.momentum.length === 0 && <div className="empty">No momentum screen this day.</div>}
               {deck.momentum.map((m) => (
                 <div className="row" key={m.ticker}>
@@ -240,10 +287,9 @@ export function Dashboard({
                   </span>
                 </div>
               ))}
-            </div>
+            </Panel>
 
-            <div className="card">
-              <h2 className="card__title">Rotation watch</h2>
+            <Panel title="Rotation watch" fold={folded('rotation')}>
               <div className="note" style={{ marginTop: 0 }}>
                 {deck.rotations.flagged} flagged · {deck.unansweredCount} questions logged
               </div>
@@ -258,7 +304,7 @@ export function Dashboard({
                   </span>
                 </div>
               ))}
-            </div>
+            </Panel>
           </aside>
         </div>
       </main>

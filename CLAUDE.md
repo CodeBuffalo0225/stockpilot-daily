@@ -16,10 +16,38 @@ Next.js 16 (App Router) on Vercel · Supabase spine · Remotion 4.0.513 +
 npm run dev                 # Next.js dashboard  <- not Studio any more
 npm run studio              # Remotion Studio
 npm run sync                # spine -> Supabase + data/decks/
+npm run sync -- --local     # data/decks/ only (Docker/Supabase down)
+npm test                    # lens tests
 npm run daily -- --both     # pull deck + render both formats
 npm run lint                # eslint + tsc
 npx remotion still StockPilotDaily out/x.png --frame=450 --scale=0.5
 ```
+
+## Investor lens (full rules in AGENTS.md)
+
+`/?lens=<archetype>&ai=<posture>` reframes the day's board for one investor's
+profile. The link comes from the investor-quiz repo when someone finishes it.
+
+- **A lens changes emphasis, never a call.** Same tickers, verdicts, tiers and
+  sizes for every viewer. Picking securities or sizes per person from a
+  questionnaire is personalised investment advice; framing the same calls
+  differently is not. `buildLens` must stay read-only — a test deep-compares
+  the deck before and after.
+- **Every figure in a lens point comes off the deck.** No model runs. A point
+  whose data is missing is dropped, not filled. `npm test` checks every number
+  in every point against the numbers the deck holds; plant an invented one and
+  it fails naming the line.
+- **The keys are a contract with investor-quiz** (`public/lens.js`). Both repos
+  pin the exact lists in tests, because an unknown `?lens=` quietly means no
+  lens — the link still opens, just untailored.
+- **Built on the server.** `page.tsx` builds the view beside the validated deck
+  and passes plain prose down. Do not import `src/lens/lens.ts` into a client
+  component; it would pull zod into the browser bundle for nothing.
+- **Folded, never hidden.** A lens may fold the Momentum and Rotation cards into
+  a `<details>`; the data stays one click away.
+- **`QUIZ_URL`** (optional, read at request time — deliberately not
+  `NEXT_PUBLIC_`) shows the "take the profile" invite when no lens is active.
+  Unset means no invite, never a dead link.
 
 ## Data layer
 
