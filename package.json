@@ -6,6 +6,7 @@
   "license": "UNLICENSED",
   "private": true,
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.127.0",
     "@notionhq/client": "2.2.15",
     "@remotion/cli": "4.0.513",
     "@remotion/google-fonts": "4.0.513",
@@ -51,7 +52,8 @@
     "db:stop": "supabase stop",
     "bundle": "remotion bundle",
     "upgrade": "remotion upgrade",
-    "test": "tsx --test test/*.test.ts"
+    "test": "tsx --test test/*.test.ts",
+    "ask": "tsx scripts/ask-once.ts"
   },
   "sideEffects": [
     "*.css"

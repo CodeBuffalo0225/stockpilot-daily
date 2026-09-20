@@ -120,6 +120,12 @@ not need a rebuild — but it is also not `NEXT_PUBLIC_`, and must not become so
 Then give investor-quiz this deployment's URL as its `STOCKPILOT_DAILY_URL`, so
 quiz results link back here with `?lens=`.
 
+**Optional — `ANTHROPIC_API_KEY`** turns on the model half of "Ask the board". Without
+it the deterministic answerer handles every question, which is a working feature, not a
+degraded one. `ASK_DAILY_CAP` (default 200) bounds calls per warm instance only —
+**before this deployment is public, add a Vercel Firewall rate-limit rule on
+`/api/ask`**, or a script can run up the API bill one question at a time.
+
 ---
 
 ## 4. Populating the database — the part that needs the owner's machine

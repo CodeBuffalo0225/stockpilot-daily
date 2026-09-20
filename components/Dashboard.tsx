@@ -9,6 +9,7 @@ import type { DailyDeck } from '../src/spine/schema';
 import type { LensView, Foldable } from '../src/lens/lens';
 import { TickerRail } from './TickerRail';
 import { LensPanel, LensInvite } from './LensPanel';
+import { AskBoard } from './AskBoard';
 
 const FPS = 30;
 
@@ -184,6 +185,8 @@ export function Dashboard({
                 <p className="thesis">{deck.thesis}</p>
               </div>
             )}
+
+            <AskBoard date={deck.date} lens={lens?.key} ai={lens?.ai} />
           </section>
 
           {/* -------------------------------------------------------- rail */}

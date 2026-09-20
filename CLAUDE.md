@@ -17,7 +17,8 @@ npm run dev                 # Next.js dashboard  <- not Studio any more
 npm run studio              # Remotion Studio
 npm run sync                # spine -> Supabase + data/decks/
 npm run sync -- --local     # data/decks/ only (Docker/Supabase down)
-npm test                    # lens tests
+npm test                    # lens + ask tests
+npm run ask -- "question"   # ask the board from the terminal (--local)
 npm run daily -- --both     # pull deck + render both formats
 npm run lint                # eslint + tsc
 npx remotion still StockPilotDaily out/x.png --frame=450 --scale=0.5
@@ -48,6 +49,33 @@ profile. The link comes from the investor-quiz repo when someone finishes it.
 - **`QUIZ_URL`** (optional, read at request time — deliberately not
   `NEXT_PUBLIC_`) shows the "take the profile" invite when no lens is active.
   Unset means no invite, never a dead link.
+
+## Ask the board (full rules in AGENTS.md)
+
+`POST /api/ask` answers one question about one day's deck, pitched at the reader's lens.
+`src/ask/`: `facts.ts` (deck -> numbered fact lines), `answer.ts` (deterministic
+answerer), `ask.ts` (model call + gates), `grounding.ts` (the gate itself),
+`schema.ts` (both boundaries). CLI: `npm run ask -- "question" [--date] [--lens] [--local]`.
+
+- **The model routes, the engine computes.** The model never sees the deck and never
+  does arithmetic - it gets finished figures as numbered facts and may only restate
+  them. Do not hand it raw deck objects and do not ask it to total anything.
+- **Four gates, in code, in this order** (`applyGates`): schema (Zod on the reply, re-run
+  in our process even though the API was given the same format), citation (every cited
+  fact number must exist), grounding (every figure must trace to a deck number), advice
+  (no reply that tells the reader to buy, sell or size). A reply failing any gate is
+  **discarded whole** - never edited to remove the offending part.
+- **There is always a true answer.** Every rejection, missing key, refusal or API error
+  falls through to the deterministic answerer, which is itself grounded (a test asserts
+  its output passes the same gate). The page labels which one spoke; keep that label.
+- **`ANTHROPIC_API_KEY` is optional by design.** Unset, the deterministic answerer is the
+  whole feature - the no-key path is a real product, not a broken one.
+- **Cost rail:** `ASK_DAILY_CAP` (default 200) bounds calls **per warm instance**, not
+  per deployment - instances do not share memory. It stops a runaway loop; it does not
+  stop a determined caller. **Put a request rate limit in front of `/api/ask` before
+  this is public** (Vercel Firewall rule; dashboard, not code).
+- Questions are never logged. Provider error bodies are never logged or returned - they
+  can carry the question.
 
 ## Data layer
 

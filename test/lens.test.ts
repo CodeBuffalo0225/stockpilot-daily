@@ -12,6 +12,7 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { DailyDeck } from '../src/spine/schema';
 import { LensKey, AiPosture, buildLens, parseLens } from '../src/lens/lens';
+import { deckNumbers as pool, figuresIn as figures, traceable } from '../src/ask/grounding';
 
 const root = join(__dirname, '..');
 const load = (p: string) => DailyDeck.parse(JSON.parse(readFileSync(p, 'utf8')));
@@ -34,37 +35,6 @@ const bare: DailyDeck = {
   momentum: [],
   outcomes: null,
 };
-
-/** Every number the deck holds: numeric fields, numbers inside its text, array lengths. */
-function pool(deck: DailyDeck): number[] {
-  const out: number[] = [];
-  const walk = (v: unknown): void => {
-    if (typeof v === 'number') out.push(v);
-    else if (typeof v === 'string') for (const m of v.matchAll(/-?\d+(?:\.\d+)?/g)) out.push(Number(m[0]));
-    else if (Array.isArray(v)) {
-      out.push(v.length);
-      v.forEach(walk);
-    } else if (v && typeof v === 'object') Object.values(v).forEach(walk);
-  };
-  walk(deck);
-  return out;
-}
-
-/**
- * Figures shown in a line. Window labels ("30-day", "21 days") name what a field
- * measures - they are schema vocabulary, not data - so they are stripped first.
- */
-function figures(line: string): Array<{ raw: string; value: number; dp: number }> {
-  const stripped = line.replace(/\b\d+(?:-day| days)\b/g, '');
-  return [...stripped.matchAll(/[-+]?\d+(?:\.(\d+))?/g)].map((m) => ({
-    raw: m[0],
-    value: Number(m[0]),
-    dp: m[1]?.length ?? 0,
-  }));
-}
-
-const traceable = (f: { value: number; dp: number }, nums: number[]) =>
-  nums.some((x) => Math.abs(x - f.value) <= 0.5 * 10 ** -f.dp + 1e-9);
 
 const everyLens = () =>
   LensKey.options.flatMap((k) => [null, ...AiPosture.options].map((a) => [k, a] as const));
