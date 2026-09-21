@@ -15,3 +15,10 @@ next-env.d.ts
 # synced decks (regenerate with npm run sync)
 data/decks/
 public/preview.html
+
+# gauntlet run artifacts (the harness is committed; a run's output is not)
+.gauntlet/pairs/
+.gauntlet/keys/
+.gauntlet/shots/
+.gauntlet/log.jsonl
+.gauntlet/started_at

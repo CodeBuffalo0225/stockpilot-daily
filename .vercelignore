@@ -1,0 +1,14 @@
+# Vercel uploads from this machine, not from git, because the decks in data/decks/
+# are gitignored by design (the pipeline reports only exist here — see AGENTS.md).
+# A .vercelignore replaces .gitignore for uploads, so data/decks/ ships with the build.
+node_modules
+.next
+out
+.git
+.env
+.env*.local
+supabase/.temp
+supabase/.branches
+tsconfig.tsbuildinfo
+*.log
+.DS_Store

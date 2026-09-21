@@ -1,0 +1,59 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StockPilot Daily — Gauntlet</title>
+<style>
+  :root { color-scheme: dark; --bg:#05070d; --panel:rgba(255,255,255,.04); --edge:rgba(255,255,255,.09);
+          --text:#e9eff7; --dim:#8d9cb2; --ok:#00e58c; --wait:#ffb020; --stop:#ff3d5e; --accent:#2ed9f0; }
+  body { margin:0; padding:24px 16px; background:var(--bg); color:var(--text);
+         font:15px/1.5 "Inter Tight",Inter,system-ui,sans-serif; }
+  .wrap { max-width:900px; margin:0 auto; }
+  h1 { font-size:22px; letter-spacing:-.4px; margin:0 0 4px; }
+  .sub { color:var(--dim); font-size:13px; margin:0 0 22px; font-family:ui-monospace,monospace; }
+  .piece { background:var(--panel); border:1px solid var(--edge); border-radius:12px; padding:16px 18px; margin-bottom:14px; }
+  .head { display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; }
+  .name { font-weight:600; }
+  .state { font-family:ui-monospace,monospace; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; }
+  .running { color:var(--wait); } .won { color:var(--ok); } .escalated { color:var(--stop); } .measured { color:var(--accent); }
+  .gap { color:var(--dim); font-size:13.5px; margin:10px 0 0; }
+  .shots { display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; }
+  .shots figure { margin:0; flex:1 1 200px; }
+  .shots img { width:100%; border-radius:8px; border:1px solid var(--edge); display:block; }
+  .shots figcaption { font-family:ui-monospace,monospace; font-size:10px; letter-spacing:1px;
+                      text-transform:uppercase; color:var(--dim); margin-top:6px; }
+  .note { color:var(--dim); font-size:12.5px; border-top:1px solid var(--edge); padding-top:14px; margin-top:20px; }
+</style>
+<div class="wrap">
+  <h1>StockPilot Daily — Gauntlet</h1>
+  <p class="sub" id="meta">bar: Robinhood · not started</p>
+
+  <div class="piece">
+    <div class="head"><span class="name">board</span><span class="state running">not started</span></div>
+    <p class="gap">The day's verdicts, allocation and thesis at a glance. Bar: Robinhood positions screen.</p>
+    <div class="shots">
+      <figure><img alt="v1 capture pending" src="shots/board.png" onerror="this.closest('figure').hidden=true"><figcaption>ours — latest</figcaption></figure>
+      <figure><img alt="bar capture pending" src="bars/board/bar.png" onerror="this.closest('figure').hidden=true"><figcaption>bar</figcaption></figure>
+    </div>
+  </div>
+
+  <div class="piece">
+    <div class="head"><span class="name">momentum</span><span class="state running">not started</span></div>
+    <p class="gap">The ranked screen. Bar: TradingView mobile screener.</p>
+  </div>
+
+  <div class="piece">
+    <div class="head"><span class="name">ask</span><span class="state running">not started</span></div>
+    <p class="gap">The question panel and its answer. Bar: Robinhood Learn surfaces.</p>
+  </div>
+
+  <div class="piece">
+    <div class="head"><span class="name">spine + ask-grounding</span><span class="state measured">measured</span></div>
+    <p class="gap">No blind A/B. Bars are <code>npm run check</code> clean on all three source paths and <code>npm test</code> at 39/39 with zero ungrounded figures.</p>
+  </div>
+
+  <p class="note">
+    Updated by the lead agent each round from <code>.gauntlet/log.jsonl</code>. A piece is
+    <span class="won">won</span> only when ours wins the blind pick in <em>both</em> orderings.
+    Single-order wins are noise and count as a loss.
+  </p>
+</div>

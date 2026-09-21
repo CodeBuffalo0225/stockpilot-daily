@@ -1,0 +1,9 @@
+{
+  "app": "StockPilot Daily",
+  "bar": "Robinhood",
+  "max_wall_hours": 8,
+  "max_rounds_per_piece": null,
+  "plateau_rounds": 3,
+  "spend_ceiling_usd": null,
+  "spend_note": "UNSET. Travis must set spend_ceiling_usd before the first run. Claude Code exposes no programmatic spend kill switch, so this dollar figure is NOT enforced in code - the lead agent checks /cost at each wave and stops at 90% of it. Wall clock is the only ceiling gauntlet.py can enforce."
+}
