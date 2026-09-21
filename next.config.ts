@@ -1,6 +1,9 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  // The dev overlay badge floats over the bottom-left of every page and landed on top
+  // of a rotation row in a gauntlet capture, so a critic was judging dev chrome.
+  devIndicators: false,
   // The Remotion compositions are ESM-heavy and ship untranspiled helpers.
   transpilePackages: ['remotion', '@remotion/player', '@remotion/google-fonts'],
   outputFileTracingIncludes: {

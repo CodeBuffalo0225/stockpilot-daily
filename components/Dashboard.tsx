@@ -92,7 +92,13 @@ export function Dashboard({
   }, [selected, deck]);
 
   const total = Math.max(deck.counts.buy + deck.counts.watch + deck.counts.skip, 1);
-  const maxMomentum = Math.max(...deck.momentum.map((m) => m.momentumScore), 1);
+  // Momentum score is already a 0-100 scale, so the bar is drawn against a fixed
+  // axis rather than against the day's own maximum - otherwise the top name is always
+  // full-width and the bars carry no information.
+  const rankedMomentum = useMemo(
+    () => [...deck.momentum].sort((a, b) => b.momentumScore - a.momentumScore),
+    [deck],
+  );
 
   return (
     <>
@@ -322,16 +328,22 @@ export function Dashboard({
             </div>
 
             <Panel title="Momentum" fold={folded('momentum')}>
-              {deck.momentum.length === 0 && <div className="empty">No momentum screen this day.</div>}
-              {deck.momentum.map((m) => (
-                <div className="row" key={m.ticker}>
+              {rankedMomentum.length === 0 && <div className="empty">No momentum screen this day.</div>}
+              {rankedMomentum.length > 0 && (
+                <div className="row row--head">
+                  <span className="row__t" />
+                  <span className="bar bar--head">score, 0&ndash;100</span>
+                  <span className="row__num">score</span>
+                  <span className="row__num">63d</span>
+                </div>
+              )}
+              {rankedMomentum.map((m) => (
+                <div className="row row--mom" key={m.ticker}>
                   <span className="row__t">{m.ticker}</span>
                   <span className="bar">
-                    <span
-                      className="bar__fill"
-                      style={{ width: `${(m.momentumScore / maxMomentum) * 100}%` }}
-                    />
+                    <span className="bar__fill" style={{ width: `${Math.min(m.momentumScore, 100)}%` }} />
                   </span>
+                  <span className="row__num">{m.momentumScore.toFixed(0)}</span>
                   <span className="row__num" style={{ color: (m.ret63d ?? 0) >= 0 ? 'var(--buy)' : 'var(--skip)' }}>
                     {pct(m.ret63d, 0)}
                   </span>

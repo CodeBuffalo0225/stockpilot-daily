@@ -510,3 +510,12 @@ select.btn { appearance: none; padding-right: 28px; }
   /* One marquee is texture; two is a wall in front of the content. */
   .rail--sub { display: none; }
 }
+
+/* Momentum: a header so the two numbers are named, and a fixed 0-100 bar axis. */
+.row--mom { grid-template-columns: 52px minmax(0, 1fr) 34px 46px; }
+.row--head { grid-template-columns: 52px minmax(0, 1fr) 34px 46px; border-bottom: 1px solid var(--panel-edge); padding-bottom: 6px; }
+.row--head .row__num, .bar--head {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: 1.2px;
+  text-transform: uppercase; color: var(--text-faint); background: none;
+}
+.bar--head { align-self: center; height: auto; background: none; overflow: visible; line-height: 1.2; }

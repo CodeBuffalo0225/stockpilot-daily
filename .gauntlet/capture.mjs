@@ -17,8 +17,16 @@ import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 
-const args = process.argv.slice(2).filter((a) => a !== '--full');
-const fullPage = process.argv.includes('--full');
+const argv = process.argv.slice(2);
+const fullPage = argv.includes('--full');
+// --scroll-to <selector> brings one piece into the frame before the shutter, so a piece
+// that lives further down the page is still judged at the bar's viewport rather than as
+// a cropped element. Identical framing on both sides is what keeps the pair blind.
+const scrollIdx = argv.indexOf('--scroll-to');
+const scrollTo = scrollIdx >= 0 ? argv[scrollIdx + 1] : null;
+// Guard the -1 case: without --scroll-to, `i !== scrollIdx + 1` would drop argv[0].
+const drop = scrollIdx >= 0 ? new Set([scrollIdx, scrollIdx + 1]) : new Set();
+const args = argv.filter((a, i) => a !== '--full' && !drop.has(i));
 const [piece, url, out = `.gauntlet/shots/${piece}.png`] = args;
 if (!piece || !url) {
   console.error('usage: node .gauntlet/capture.mjs <piece> <url> [out.png]');
@@ -29,6 +37,10 @@ mkdirSync(dirname(out), { recursive: true });
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
 await page.goto(url, { waitUntil: 'networkidle' });
+if (scrollTo) {
+  await page.locator(scrollTo).first().scrollIntoViewIfNeeded();
+  await page.waitForTimeout(400);
+}
 // The board animates in; settle before the shutter so two rounds are comparable.
 await page.waitForTimeout(1200);
 await page.screenshot({ path: out, fullPage });
