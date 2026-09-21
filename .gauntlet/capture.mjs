@@ -33,16 +33,40 @@ if (!piece || !url) {
   process.exit(1);
 }
 
+// A bot wall, consent gate or sign-in screen is not a bar. Captured silently it would
+// be handed to a critic as the reference, ours would win against a CAPTCHA, and the
+// loop would be grading itself. Refuse the capture instead.
+const NOT_A_BAR = /verify you are human|security verification|are you a robot|checking your browser|enable javascript|sign in to continue|create an account to continue/i;
+
 mkdirSync(dirname(out), { recursive: true });
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
-await page.goto(url, { waitUntil: 'networkidle' });
+// networkidle settles our own app reliably, but many shipped apps hold streaming or
+// polling connections open and never reach it - so fall back rather than fail the
+// capture, which would quietly mean no bar and a loop that grades itself.
+try {
+  await page.goto(url, { waitUntil: 'networkidle', timeout: 20_000 });
+} catch {
+  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20_000 });
+  await page.waitForTimeout(3000);
+}
 if (scrollTo) {
   await page.locator(scrollTo).first().scrollIntoViewIfNeeded();
   await page.waitForTimeout(400);
 }
 // The board animates in; settle before the shutter so two rounds are comparable.
 await page.waitForTimeout(1200);
-await page.screenshot({ path: out, fullPage });
+const text = await page.evaluate(() => document.body?.innerText?.slice(0, 4000) ?? '');
+const wall = text.match(NOT_A_BAR);
+await page.screenshot({ path: wall ? `${out}.REJECTED.png` : out, fullPage });
 await browser.close();
+
+if (wall) {
+  console.error(
+    `REFUSED: ${url} returned a wall ("${wall[0]}"), not the product.\n` +
+      `Saved to ${out}.REJECTED.png for inspection. Do not use it as a bar - a critic\n` +
+      `comparing against a CAPTCHA would hand the win to ours for no reason.`,
+  );
+  process.exit(2);
+}
 console.log(out);
