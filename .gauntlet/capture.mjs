@@ -36,7 +36,8 @@ if (!piece || !url) {
 // A bot wall, consent gate or sign-in screen is not a bar. Captured silently it would
 // be handed to a critic as the reference, ours would win against a CAPTCHA, and the
 // loop would be grading itself. Refuse the capture instead.
-const NOT_A_BAR = /verify you are human|security verification|are you a robot|checking your browser|enable javascript|sign in to continue|create an account to continue/i;
+const NOT_A_BAR =
+  /verify you are human|security verification|are you a robot|checking your browser|enable javascript|sign in to continue|create an account to continue|something went wrong|page not found|404 error|we're not able to load|temporarily unavailable/i;
 
 mkdirSync(dirname(out), { recursive: true });
 const browser = await chromium.launch();
@@ -65,7 +66,7 @@ if (wall) {
   console.error(
     `REFUSED: ${url} returned a wall ("${wall[0]}"), not the product.\n` +
       `Saved to ${out}.REJECTED.png for inspection. Do not use it as a bar - a critic\n` +
-      `comparing against a CAPTCHA would hand the win to ours for no reason.`,
+      `comparing ours against a wall or an error page hands us the win for no reason.`,
   );
   process.exit(2);
 }

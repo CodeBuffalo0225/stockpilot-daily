@@ -1,16 +1,22 @@
-# ask — NO BAR YET
+# ask — STILL NO BAR
 
-Perplexity was the intended bar for the ask panel. It is behind a Cloudflare bot
-check, which this harness now refuses to capture: `REJECTED-cloudflare-wall.png` is
-what came back. Bypassing bot detection is not on the table, so this bar has to come
-from somewhere else.
+Three sources tried, none usable. The captures are kept as evidence, all prefixed
+REJECTED so a run cannot mistake one for a bar:
 
-**Do not run a blind round for `ask` until a real bar is here.** A critic comparing
-our panel against a CAPTCHA page picks ours every time, and the loop would be
-grading itself — the exact failure the method exists to prevent.
+| Source | Result |
+|---|---|
+| Perplexity | Cloudflare "verify you are human" wall. Bypassing bot detection is not an option. |
+| robinhood.com/us/en/learn/ | Captures fine, but it is a marketing hero for an education hub — not the same job as an answer panel. A cross-surface pair produces a "which is prettier" pick, not a useful gap. |
+| A Learn article URL | Robinhood's own "Oops, something went wrong" error page. |
 
-Options, in order of preference:
-1. A 390x844 screenshot of Robinhood's own Learn / answer surface, taken on the phone.
-2. Any shipped answer-with-sources surface that captures without a wall.
-3. The skill's fallback: generated target stills — but Travis approves them first,
-   because an agent approving its own targets is self-grading by proxy.
+**`ask` is therefore unjudged, on purpose.** Running a blind round against any of the
+above would hand ours an easy win and tell us nothing — the self-grading failure this
+method exists to prevent.
+
+What would work, in order:
+1. A 390x844 screenshot from the phone of an answer-style surface — Robinhood Learn in
+   the app, or any shipped answer-with-sources view.
+2. The skill's fallback: generated target stills, approved by Travis first. An agent
+   approving its own targets is self-grading by proxy.
+
+`lens` has the same problem and the same fix.
