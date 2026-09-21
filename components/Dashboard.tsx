@@ -106,7 +106,7 @@ export function Dashboard({
               STOCK<span>PILOT</span> DAILY
             </div>
             <div className="brand__sub">
-              {deck.date} · {deck.counts.screened} screened · source {deck.source}
+              {deck.counts.screened} screened · source {deck.source}
             </div>
           </div>
 
@@ -142,7 +142,54 @@ export function Dashboard({
               quizUrl && <LensInvite quizUrl={quizUrl} />
             )}
 
-            <div className="toolbar">
+            {/* The decisions, first. On a phone the grid is one column, so without
+                this the reader met the player and the export toggles before a single
+                verdict — the blind critic picked the reference on exactly that. */}
+            <div className="card today">
+              <h2 className="card__title">The day&apos;s calls</h2>
+              <div className="stats">
+                {(
+                  [
+                    ['BUY', deck.counts.buy, 'var(--buy)'],
+                    ['WATCH', deck.counts.watch, 'var(--watch)'],
+                    ['SKIP', deck.counts.skip, 'var(--skip)'],
+                  ] as const
+                ).map(([label, n, color]) => (
+                  <div className="stat" key={label} style={{ borderColor: `${color}44` }}>
+                    <div className="stat__n" style={{ color }}>{n}</div>
+                    <div className="stat__l">{label}</div>
+                  </div>
+                ))}
+              </div>
+              {deck.allocation.length === 0 ? (
+                <div className="empty">Nothing sized today.</div>
+              ) : (
+                deck.allocation.map((p) => {
+                  const t = deck.tape.find((x) => x.ticker === p.ticker);
+                  return (
+                    <button
+                      type="button"
+                      className="today__row"
+                      key={p.ticker}
+                      onClick={() => setSelected(p.ticker)}
+                    >
+                      <span className="today__t">{p.ticker}</span>
+                      <span className="today__n">{p.name ?? ''}</span>
+                      <span className="today__p">{t?.price != null ? t.price.toFixed(2) : '—'}</span>
+                      <span
+                        className="today__c"
+                        style={{ color: (t?.changePct ?? 0) >= 0 ? 'var(--buy)' : 'var(--skip)' }}
+                      >
+                        {pct(t?.changePct ?? null)}
+                      </span>
+                      <span className="today__w">{p.positionPct}%</span>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+
+            <div className="toolbar toolbar--render">
               {(['vertical', 'landscape'] as const).map((f) => (
                 <button
                   key={f}
@@ -154,7 +201,7 @@ export function Dashboard({
                   {f === 'vertical' ? '1080×1920' : '1920×1080'}
                 </button>
               ))}
-              <span className="badge" style={{ marginLeft: 'auto' }}>
+              <span className="badge badge--frames" style={{ marginLeft: 'auto' }}>
                 {(duration / FPS).toFixed(1)}s · {duration} frames
               </span>
             </div>

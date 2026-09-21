@@ -7,13 +7,19 @@
  * mismatched viewport is the most common way a "blind" comparison stops being blind:
  * the critic can tell which is which from the framing alone, before it judges anything.
  *
+ * Shoots the VIEWPORT, not the full page. A full-page shot of a scrolling board came out
+ * 780x5788 next to a 780x1688 phone screenshot - the critic would have known which was
+ * which before judging anything. Pass --full only when comparing against a full-page bar.
+ *
  * Needs: npm i -D playwright && npx playwright install chromium
  */
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 
-const [piece, url, out = `.gauntlet/shots/${piece}.png`] = process.argv.slice(2);
+const args = process.argv.slice(2).filter((a) => a !== '--full');
+const fullPage = process.argv.includes('--full');
+const [piece, url, out = `.gauntlet/shots/${piece}.png`] = args;
 if (!piece || !url) {
   console.error('usage: node .gauntlet/capture.mjs <piece> <url> [out.png]');
   process.exit(1);
@@ -25,6 +31,6 @@ const page = await browser.newPage({ viewport: { width: 390, height: 844 }, devi
 await page.goto(url, { waitUntil: 'networkidle' });
 // The board animates in; settle before the shutter so two rounds are comparable.
 await page.waitForTimeout(1200);
-await page.screenshot({ path: out, fullPage: true });
+await page.screenshot({ path: out, fullPage });
 await browser.close();
 console.log(out);

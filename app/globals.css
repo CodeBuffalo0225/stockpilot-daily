@@ -471,3 +471,42 @@ select.btn { appearance: none; padding-right: 28px; }
   .ask__row { flex-wrap: wrap; }
   .ask__go { width: 100%; }
 }
+
+/* ------------------------------------------------------- today (mobile lead) */
+/* Round 1 of the gauntlet lost on this: at 390px the reader met a ticker marquee,
+   export toggles and a frame count before a single verdict. */
+
+.today { margin-bottom: 18px; }
+.today__row {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) auto auto 46px;
+  gap: 10px;
+  align-items: baseline;
+  width: 100%;
+  padding: 11px 2px;
+  border: 0;
+  border-top: 1px solid var(--panel-edge);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.today__row:hover { background: rgba(255, 255, 255, 0.03); }
+.today__t { font-family: var(--mono); font-weight: 700; letter-spacing: .5px; }
+.today__n { color: var(--text-dim); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.today__p, .today__c, .today__w { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 13.5px; }
+.today__p { color: var(--text-dim); }
+.today__w { color: var(--buy); font-weight: 600; text-align: right; }
+
+@media (min-width: 1081px) {
+  /* The rail already shows the board and the allocation side by side up here. */
+  .today { display: none; }
+}
+@media (max-width: 620px) {
+  .today__n, .today__p { display: none; }
+  .today__row { grid-template-columns: 62px minmax(0, 1fr) 52px; }
+  .badge--frames { display: none; }
+  /* One marquee is texture; two is a wall in front of the content. */
+  .rail--sub { display: none; }
+}

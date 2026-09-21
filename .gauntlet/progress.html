@@ -25,30 +25,27 @@
 </style>
 <div class="wrap">
   <h1>StockPilot Daily — Gauntlet</h1>
-  <p class="sub" id="meta">bar: Robinhood · not started</p>
+  <p class="sub" id="meta">bar: Robinhood · 5 rounds logged · board WON round 2 (both orderings)</p>
 
   <div class="piece">
-    <div class="head"><span class="name">board</span><span class="state running">not started</span></div>
-    <p class="gap">The day's verdicts, allocation and thesis at a glance. Bar: Robinhood positions screen.</p>
-    <div class="shots">
-      <figure><img alt="v1 capture pending" src="shots/board.png" onerror="this.closest('figure').hidden=true"><figcaption>ours — latest</figcaption></figure>
-      <figure><img alt="bar capture pending" src="bars/board/bar.png" onerror="this.closest('figure').hidden=true"><figcaption>bar</figcaption></figure>
-    </div>
+    <div class="head"><span class="name">ask-grounding — round 1</span><span class="state won">won · measured</span></div>
+    
   </div>
-
   <div class="piece">
-    <div class="head"><span class="name">momentum</span><span class="state running">not started</span></div>
-    <p class="gap">The ranked screen. Bar: TradingView mobile screener.</p>
+    <div class="head"><span class="name">spine — round 1</span><span class="state won">won · measured</span></div>
+    
   </div>
-
   <div class="piece">
-    <div class="head"><span class="name">ask</span><span class="state running">not started</span></div>
-    <p class="gap">The question panel and its answer. Bar: Robinhood Learn surfaces.</p>
+    <div class="head"><span class="name">ask-ungrounded — round 1</span><span class="state won">won · measured</span></div>
+    
   </div>
-
   <div class="piece">
-    <div class="head"><span class="name">spine + ask-grounding</span><span class="state measured">measured</span></div>
-    <p class="gap">No blind A/B. Bars are <code>npm run check</code> clean on all three source paths and <code>npm test</code> at 39/39 with zero ungrounded figures.</p>
+    <div class="head"><span class="name">board — round 1</span><span class="state escalated">lost · blind</span></div>
+    <p class="gap">B must put the actual screening verdicts on the board itself — delete the export/render controls ('1080x1920 / 1920x1080', '47.5S · 1424 FRAMES') and the near-empty video preview panel, and fill that space with the ranked tickers the pipeline picked and cut today, each row carrying price, move, the screen rule it passed or failed, and a one-line reason — so the first 844pt shows decisions and why, not production settings.</p>
+  </div>
+  <div class="piece">
+    <div class="head"><span class="name">board — round 2</span><span class="state won">won · blind</span></div>
+    
   </div>
 
   <p class="note">

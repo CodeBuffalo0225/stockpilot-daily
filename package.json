@@ -1,7 +1,7 @@
 {
   "name": "stockpilot-daily",
   "version": "1.0.0",
-  "description": "StockPilot Daily \u2014 the daily agent run, rendered as a broadcast-style video",
+  "description": "StockPilot Daily — the daily agent run, rendered as a broadcast-style video",
   "repository": {},
   "license": "UNLICENSED",
   "private": true,
@@ -27,6 +27,7 @@
     "@types/react-dom": "19.2.3",
     "@types/web": "0.0.166",
     "eslint": "9.19.0",
+    "playwright": "^1.63.0",
     "prettier": "3.8.1",
     "supabase": "2.115.0",
     "tsx": "4.19.2",
