@@ -1,10 +1,11 @@
 # Deploying StockPilot Daily
 
-Production: **https://stockpilot-board.vercel.app** — Vercel project `stockpilot-board`
+Production: **https://stockpilotdaily.vercel.app** — Vercel project `stockpilotdaily`
 (Hobby plan, account `tsm5110-6848`).
 
-The project is not called `stockpilot-daily`. That project exists and blocks every
-deployment after its first — see failure mode 2 for why, and for the likely fix.
+This is the third project. `stockpilot-daily` and `stockpilot-board` both still exist,
+both still serve their one successful deployment, and both refuse every deploy after
+it. So does this one. See failure mode 2 before deploying anything.
 
 ## Why this deploys from the CLI, not from git
 
@@ -35,61 +36,62 @@ npx vercel project inspect stockpilot-daily
 `Framework Preset` must read `Next.js`. If it reads `Other`, nothing else below
 matters — the site is not being served, whatever the deploy output said.
 
-**2. `readyState: BLOCKED` — and the likely cause was a command in this runbook.**
+**2. `readyState: BLOCKED` after the first deploy — cause unknown, unresolved.**
 The deployment is created, never builds, emits no build events, and the CLI sits on
 "Building…" until it dies with `fetch failed` or `Not authorized`. `vercel ls` shows
-status `UNKNOWN`, which reads like "queued" and is not.
+`UNKNOWN`, which reads like "queued" and is not.
 
-It happened to both `stockpilot-daily` and `stockpilot-board` on 2026-09-22, in the
-same order each time: the first deploy went Ready, then `protection disable --sso`
-was run, then every deploy after that blocked. Diffing every project setting against
-the projects that deploy fine turned up exactly one difference:
+Every StockPilot project on this account has done it, identically: the first
+production deploy goes Ready, and every deploy after it blocks.
 
-| Project | `ssoProtection` | Deploys |
-| --- | --- | --- |
-| investor-quiz | `all_except_custom_domains` (default) | fine |
-| packcatch-activity | `all_except_custom_domains` (default) | fine |
-| stockpilot-board | `null` (disabled) | blocked after first |
-| stockpilot-daily | `null` (disabled) | blocked after first |
+| Project | First deploy | Later deploys | Protection |
+| --- | --- | --- | --- |
+| stockpilot-daily | Ready | all blocked | disabled |
+| stockpilot-board | Ready | all blocked | disabled |
+| stockpilotdaily | Ready | blocked | **default, never touched** |
+| investor-quiz, packcatch-activity | Ready | Ready, repeatedly | default |
 
-That is two for two either way, which is a strong correlation and not yet a proof —
-nobody has re-enabled protection and watched a deploy go through. Things ruled out
-first, each by a test rather than a guess: the account (investor-quiz deployed Ready
-in the middle of it), the build (`--prebuilt` blocked the same), size (1-2 MB), and
-concurrent deploys (one clean deploy with nothing else running still blocked).
+Ruled out, each by a test rather than a guess:
 
-**The next step, and the first thing to try when this recurs:**
+- **The account** — investor-quiz deployed Ready in the middle of every outage.
+- **The build** — a `--prebuilt` deploy, with no remote build at all, blocked the same.
+- **Size** — 1-2 MB payloads blocked.
+- **Concurrent deploys** — one clean deploy with nothing else running blocked.
+- **Deployment protection** — this runbook briefly named disabled SSO protection as
+  the cause, because it was the only setting that differed on the first two projects.
+  `stockpilotdaily` was created with the default protection, left untouched, and its
+  second deploy blocked anyway. That theory is dead.
 
-```bash
-npx vercel project protection enable stockpilot-board --sso
-npx vercel --prod --yes
-```
+What is left is something about this repo or what it serves, applied after the first
+production deploy. One unverified possibility: automated abuse review reacting to a
+new Hobby site that publishes BUY verdicts on named tickers. Nothing here confirms it.
+**The Vercel dashboard is the next place to look**, not the CLI: open the Inspect page
+of a blocked deployment, e.g.
+https://vercel.com/travis-miragliottas-projects/stockpilotdaily/3VopHyYVHydnboNn98uNcF1FGqbu
+— it may show a reason the API does not return. Failing that, Vercel support.
 
-If that deploy goes Ready, the cause is confirmed and this section should say so. If
-it still blocks, the cause is something else and the fallback is a fresh project:
+**Until this is solved, a code change reaches production only by a new project**,
+because a new project's first deploy is the only one that works:
 
 ```bash
 npx vercel link --yes --project <new-name>
-npx vercel env add QUIZ_URL production            # env vars do not follow
-npx vercel --prod --yes
+npx vercel env add QUIZ_URL production        # env vars do not follow a project
+npx vercel --prod --yes                        # first deploy: the one that works
+# then point the quiz at <new-name>.vercel.app and redeploy the quiz:
+cd ~/Projects/investor-quiz && printf 'https://<new-name>.vercel.app' | npx vercel env update STOCKPILOT_DAILY_URL production --yes && npx vercel --prod --yes
 ```
 
-Read the real state with:
+That changes the public URL every time, which is tolerable only because the quiz is
+the one inbound link. It is a workaround, not a deploy process.
 
-```bash
-npx vercel inspect <deployment-url>
-```
-
-and if that says `UNKNOWN`, the API is more honest:
+Read the real state of any deployment with the API, which is more honest than the CLI:
 `GET https://api.vercel.com/v13/deployments/<host>` → `readyState`.
 
-**3. Do not disable deployment protection to make the site public.** The default,
-`all_except_custom_domains`, protects per-deployment URLs and the team alias
-(`<project>-<team>.vercel.app` redirects to a Vercel login) but leaves the
-production domain — `stockpilot-board.vercel.app` — public. That redirect on the team
-alias is what made protection look like the problem on 2026-09-22. It wasn't: the
-production domain was 404ing because of failure mode 1. Disabling protection fixed
-nothing and is the prime suspect for failure mode 2.
+**3. Deployment protection is not the obstacle to a public site.** The default,
+`all_except_custom_domains`, leaves the production domain public. Only per-deployment
+URLs and the team alias (`<project>-<team>.vercel.app`) redirect to a login, and that
+redirect is what made protection look like a problem on 2026-09-22. It wasn't: the
+production domain was 404ing because of failure mode 1. Leave it at the default.
 
 **4. Never deploy `--prebuilt` from a checkout that holds `.env.local`.** Vercel's
 Next builder (`@vercel/next`) adds every `.env*` file in the build directory to every
@@ -106,7 +108,7 @@ empty values.
 
 | Variable | Set? | Effect when unset |
 | --- | --- | --- |
-| `QUIZ_URL` | yes, on `stockpilot-board` | No invite link on the board. Never a link to nowhere. |
+| `QUIZ_URL` | yes, on `stockpilotdaily` | No invite link on the board. Never a link to nowhere. |
 | `ANTHROPIC_API_KEY` | **no, deliberately** | `/api/ask` returns `no_key` and the deterministic answerer runs. |
 | `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | no | Store falls back to the local deck files traced into the build. |
 
@@ -115,7 +117,7 @@ limit. The route is public and every call would spend real money.
 
 ## The loop with the quiz
 
-The quiz reads `STOCKPILOT_DAILY_URL` (set to `https://stockpilot-board.vercel.app`) and returns `daily:` from `/api/submit`,
+The quiz reads `STOCKPILOT_DAILY_URL` (set to `https://stockpilotdaily.vercel.app`) and returns `daily:` from `/api/submit`,
 null until that variable is set. Only archetype and AI posture travel in the URL —
 no name, no email, no answers. Vercel injects env vars at deploy time, so setting
 the variable is not enough; the quiz has to be redeployed after.
