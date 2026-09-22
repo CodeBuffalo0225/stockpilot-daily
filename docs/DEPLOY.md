@@ -3,9 +3,8 @@
 Production: **https://stockpilotdaily.vercel.app** — Vercel project `stockpilotdaily`
 (Hobby plan, account `tsm5110-6848`).
 
-This is the third project. `stockpilot-daily` and `stockpilot-board` both still exist,
-both still serve their one successful deployment, and both refuse every deploy after
-it. So does this one. See failure mode 2 before deploying anything.
+`stockpilot-daily` and `stockpilot-board` are earlier projects that still serve old
+builds. They were abandoned while chasing failure mode 2, before its cause was known.
 
 ## Why this deploys from the CLI, not from git
 
@@ -36,56 +35,46 @@ npx vercel project inspect stockpilot-daily
 `Framework Preset` must read `Next.js`. If it reads `Other`, nothing else below
 matters — the site is not being served, whatever the deploy output said.
 
-**2. `readyState: BLOCKED` after the first deploy — cause unknown, unresolved.**
+**2. `readyState: BLOCKED` after the first deploy — the commit author has no account.**
 The deployment is created, never builds, emits no build events, and the CLI sits on
 "Building…" until it dies with `fetch failed` or `Not authorized`. `vercel ls` shows
-`UNKNOWN`, which reads like "queued" and is not.
+`UNKNOWN`. Nothing in the CLI output says why.
 
-Every StockPilot project on this account has done it, identically: the first
-production deploy goes Ready, and every deploy after it blocks.
+The API does, in a field that is easy to miss:
 
-| Project | First deploy | Later deploys | Protection |
-| --- | --- | --- | --- |
-| stockpilot-daily | Ready | all blocked | disabled |
-| stockpilot-board | Ready | all blocked | disabled |
-| stockpilotdaily | Ready | blocked | **default, never touched** |
-| investor-quiz, packcatch-activity | Ready | Ready, repeatedly | default |
-
-Ruled out, each by a test rather than a guess:
-
-- **The account** — investor-quiz deployed Ready in the middle of every outage.
-- **The build** — a `--prebuilt` deploy, with no remote build at all, blocked the same.
-- **Size** — 1-2 MB payloads blocked.
-- **Concurrent deploys** — one clean deploy with nothing else running blocked.
-- **Deployment protection** — this runbook briefly named disabled SSO protection as
-  the cause, because it was the only setting that differed on the first two projects.
-  `stockpilotdaily` was created with the default protection, left untouched, and its
-  second deploy blocked anyway. That theory is dead.
-
-What is left is something about this repo or what it serves, applied after the first
-production deploy. One unverified possibility: automated abuse review reacting to a
-new Hobby site that publishes BUY verdicts on named tickers. Nothing here confirms it.
-**The Vercel dashboard is the next place to look**, not the CLI: open the Inspect page
-of a blocked deployment, e.g.
-https://vercel.com/travis-miragliottas-projects/stockpilotdaily/3VopHyYVHydnboNn98uNcF1FGqbu
-— it may show a reason the API does not return. Failing that, Vercel support.
-
-**Until this is solved, a code change reaches production only by a new project**,
-because a new project's first deploy is the only one that works:
-
-```bash
-npx vercel link --yes --project <new-name>
-npx vercel env add QUIZ_URL production        # env vars do not follow a project
-npx vercel --prod --yes                        # first deploy: the one that works
-# then point the quiz at <new-name>.vercel.app and redeploy the quiz:
-cd ~/Projects/investor-quiz && printf 'https://<new-name>.vercel.app' | npx vercel env update STOCKPILOT_DAILY_URL production --yes && npx vercel --prod --yes
+```
+readyStateReason: "The deployment was blocked because Vercel couldn't find a Git
+                   account for the commit author."
+seatBlock:        { blockCode: "COMMIT_AUTHOR_REQUIRED" }
+attribution:      commitMeta.email = teambuffalooutdoors@MacBookPro.lan
 ```
 
-That changes the public URL every time, which is tolerable only because the quiz is
-the one inbound link. It is a workaround, not a deploy process.
+This repo had no `user.email` configured anywhere, so git fell back to
+`<user>@<hostname>` for every commit — an address no GitHub or Vercel account owns.
+The first deploy to a new project succeeds because Vercel links the Git repo during
+that deploy; from then on every CLI deploy carries `HEAD`'s author and is checked.
+That is why three projects in a row went Ready once and then blocked forever.
 
-Read the real state of any deployment with the API, which is more honest than the CLI:
-`GET https://api.vercel.com/v13/deployments/<host>` → `readyState`.
+The repo now pins its identity locally, the same way packcatch-activity does:
+
+```bash
+git config --local user.email tsm5110@gmail.com
+git config --local user.name "Travis Miragliotta"
+```
+
+Only `HEAD`'s author matters to the check, so older commits were left as they are —
+rewriting pushed history to fix an email is not worth it.
+
+**How the wrong answers happened, so they do not happen again.** Before the real cause
+was found, this runbook blamed a rate limit, then concurrent builds, then disabled SSO
+protection, each ruled out by the next test. The cause was in the deployment record the
+whole time; the first diagnosis printed six fields of it and not the other forty. When a
+deployment blocks, read the whole record before theorising:
+
+```bash
+curl -s -H "Authorization: Bearer $TOKEN" \
+  https://api.vercel.com/v13/deployments/<host> | python3 -m json.tool | grep -iE 'reason|block|error'
+```
 
 **3. Deployment protection is not the obstacle to a public site.** The default,
 `all_except_custom_domains`, leaves the production domain public. Only per-deployment
