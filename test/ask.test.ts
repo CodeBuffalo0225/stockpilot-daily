@@ -127,6 +127,35 @@ test('a reply containing a figure the deck does not hold is discarded whole', ()
   assert.equal(r, 'ungrounded');
 });
 
+test('a real number from the wrong field cannot ground a size claim', () => {
+  // The leak a .gauntlet probe found on 2026-07-29: "87.4% of the book" passed the
+  // gate because 87.4 was in the deck - as a 63-day return. The figure was real and
+  // the sentence was false, which is the case a pooled number check cannot see.
+  const ret = deck.momentum.find((m) => m.ret63d != null)?.ret63d;
+  assert.ok(ret != null, 'fixture needs a momentum row with a 63-day return');
+  const sizes = deck.allocation.map((p) => p.positionPct);
+  assert.ok(!sizes.some((p) => Math.abs(p - ret) < 0.05), 'that return must not also be a real size');
+
+  const answer = `${deck.allocation[0].ticker} is ${ret.toFixed(1)}% of the book today.`;
+  assert.equal(applyGates(reply({ answer }), facts, deck), 'ungrounded');
+});
+
+test('a portfolio-wide return is never grounded, because the deck holds no such number', () => {
+  for (const answer of [
+    'The book is up 41.9% since inception.',
+    'That is a 12% total return.',
+    'You are up 3.5% all-time.',
+  ]) {
+    assert.equal(applyGates(reply({ answer }), facts, deck), 'ungrounded', answer);
+  }
+});
+
+test('a real position size still passes when stated as one', () => {
+  const p = deck.allocation[0];
+  const answer = `${p.ticker} is ${p.positionPct}% of the book.`;
+  assert.equal(applyGates(reply({ answer }), facts, deck), null);
+});
+
 test('a reply restating a figure the deck does hold is kept', () => {
   const answer = `Of the names scored, ${deck.counts.skip} were skipped.`;
   assert.equal(applyGates(reply({ answer }), facts, deck), null);
