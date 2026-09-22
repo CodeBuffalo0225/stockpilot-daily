@@ -22,3 +22,5 @@ public/preview.html
 .gauntlet/shots/
 .gauntlet/log.jsonl
 .gauntlet/started_at
+.vercel
+.env*

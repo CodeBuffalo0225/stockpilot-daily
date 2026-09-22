@@ -1,6 +1,10 @@
 # Deploying StockPilot Daily
 
-Production: Vercel project `stockpilot-daily` (Hobby plan, account `tsm5110-6848`).
+Production: **https://stockpilot-board.vercel.app** — Vercel project `stockpilot-board`
+(Hobby plan, account `tsm5110-6848`).
+
+The project is not called `stockpilot-daily`. That project exists and is dead: every
+deployment after the first came back `BLOCKED`. See failure mode 2.
 
 ## Why this deploys from the CLI, not from git
 
@@ -31,12 +35,33 @@ npx vercel project inspect stockpilot-daily
 `Framework Preset` must read `Next.js`. If it reads `Other`, nothing else below
 matters — the site is not being served, whatever the deploy output said.
 
-**2. `readyState: BLOCKED`.** A burst of deploys trips a Vercel rate limit. The
-deployment is created, never builds, emits no build events, and the CLI sits on
-"Building…" indefinitely. `vercel ls` shows status `UNKNOWN`, which is not the
-same as queued. It clears on its own — investor-quiz hit it on 2026-09-20 and
-deployed normally the next morning. Retrying immediately just adds another
-blocked deployment. Read the real state with:
+**2. `readyState: BLOCKED` — per project, and it does not clear.** The deployment
+is created, never builds, emits no build events, and the CLI sits on "Building…"
+until it dies with `fetch failed`. `vercel ls` shows status `UNKNOWN`, which reads
+like "queued" and is not.
+
+This is not a rate limit, and diagnosing it as one costs an hour. On 2026-09-22 the
+`stockpilot-daily` project blocked six deployments in a row while the account was
+healthy: plan active, no `featureBlocks`, no `softBlock`, ~10 deploys in 24h. A
+`--prebuilt` deploy blocked identically, so it is not the build; the payload was
+2.3 MB, so it is not size; waiting 15 minutes changed nothing.
+
+**The decisive test is a preview deploy of a different project.** If that goes
+READY, the block belongs to the project, not the account:
+
+```bash
+cd ~/Projects/investor-quiz && npx vercel --yes   # preview; does not touch production
+```
+
+The fix is to abandon the project and make a new one:
+
+```bash
+npx vercel link --yes --project stockpilot-board
+npx vercel env add QUIZ_URL production            # env vars do not follow
+npx vercel --prod --yes
+```
+
+Read the real state with:
 
 ```bash
 npx vercel inspect <deployment-url>
@@ -56,7 +81,7 @@ npx vercel project protection disable stockpilot-daily --sso
 
 | Variable | Set? | Effect when unset |
 | --- | --- | --- |
-| `QUIZ_URL` | yes | No invite link on the board. Never a link to nowhere. |
+| `QUIZ_URL` | yes, on `stockpilot-board` | No invite link on the board. Never a link to nowhere. |
 | `ANTHROPIC_API_KEY` | **no, deliberately** | `/api/ask` returns `no_key` and the deterministic answerer runs. |
 | `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | no | Store falls back to the local deck files traced into the build. |
 
@@ -65,7 +90,7 @@ limit. The route is public and every call would spend real money.
 
 ## The loop with the quiz
 
-The quiz reads `STOCKPILOT_DAILY_URL` and returns `daily:` from `/api/submit`,
+The quiz reads `STOCKPILOT_DAILY_URL` (set to `https://stockpilot-board.vercel.app`) and returns `daily:` from `/api/submit`,
 null until that variable is set. Only archetype and AI posture travel in the URL —
 no name, no email, no answers. Vercel injects env vars at deploy time, so setting
 the variable is not enough; the quiz has to be redeployed after.
