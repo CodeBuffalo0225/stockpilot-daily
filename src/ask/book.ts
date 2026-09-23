@@ -69,12 +69,18 @@ export function buildBook(deck: DailyDeck): Book | null {
   const unwatched = deck.allocation.filter((p) => !watched.has(p.ticker)).length;
   const reconciles = unwatched === deck.counts.buy;
 
+  // One thesis sentence often names two holdings ("GOOGL and DELL earn monitoring
+  // allocations only..."). Quoting it on consecutive rows read as a copy-paste on the
+  // live site, so a sentence already shown gives way to the row's own watch note.
+  const quoted = new Set<string>();
   const rows: BookRow[] = [...deck.allocation]
     .sort((a, b) => b.positionPct - a.positionPct || a.ticker.localeCompare(b.ticker))
     .map((p) => {
       const verdict: BookVerdict | null = reconciles ? (watched.has(p.ticker) ? 'WATCH' : 'BUY') : null;
-      const quote = thesisSentenceFor(deck, p.ticker);
       const note = verdict === 'WATCH' ? (watched.get(p.ticker) ?? null) : null;
+      const sentence = thesisSentenceFor(deck, p.ticker);
+      const quote = sentence && !(quoted.has(sentence) && note) ? sentence : null;
+      if (quote) quoted.add(quote);
       const why = quote ?? note;
       return {
         ticker: p.ticker,

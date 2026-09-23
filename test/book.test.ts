@@ -76,3 +76,19 @@ test('a reason is always verbatim deck text, and an entry trigger is never shown
     assert.notEqual(r.why, p.entryNote, `${r.ticker}: an entry trigger is not a reason`);
   }
 });
+
+test('a thesis sentence shared by two holdings is quoted once when the second has its own note', () => {
+  const [a, b] = deck.allocation;
+  const shared: DailyDeck = {
+    ...deck,
+    thesis: `${a.ticker} and ${b.ticker} earn monitoring allocations only.`,
+    allocation: [a, b],
+    watches: [a, b].map((p) => ({ ticker: p.ticker, note: `own note ${p.ticker}`, alphaScore: null })),
+    counts: { ...deck.counts, buy: 0 },
+  };
+  const rows = buildBook(shared)!.rows;
+  const quotes = rows.filter((r) => r.whySource === 'thesis');
+  assert.equal(quotes.length, 1, 'the shared sentence appears once');
+  const other = rows.find((r) => r.whySource !== 'thesis')!;
+  assert.equal(other.why, `own note ${other.ticker}`);
+});
