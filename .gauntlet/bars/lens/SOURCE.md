@@ -42,3 +42,18 @@ fails; the 50/100 sentence passes.
 Before recording, each rule was proven to fire on a crafted violation — advice,
 ungrounded figure, figure-beside-ticker — and proven not to fire on the clean
 didactic sentence. A bar that cannot fail is not a bar.
+
+## Visual rounds, 2026-09-22/23
+
+Bar: the in-app screen from Robinhood's App Store frame `board/rh2.png` ("24 Hour
+Market" - an editorial framing paragraph over a list of names), cropped to the phone
+screen and scaled so both sides of every pair are exactly 780x1348.
+
+| Round | Result | What the critics named |
+| --- | --- | --- |
+| r1 | LOSS, both orders | a wall of low-contrast prose filled the first screen; no stock visible |
+| r2 | LOSS, both orders | the framing line said nothing and hid the explanation; rows did not say which was the BUY; the position column read as green returns |
+| r3 | **SPLIT** | one critic picked ours: "names the reader's profile... every row carries a call badge and a position size", the reference "is a generic header". The other wanted one typeface, fewer mono caps labels and a run timestamp |
+
+Not a win - a win needs both orderings. The loop then stopped on its wall-clock gate;
+see ../ask/SOURCE.md.

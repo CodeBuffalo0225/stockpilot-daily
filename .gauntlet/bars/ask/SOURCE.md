@@ -51,3 +51,35 @@ A 390x844 screenshot from the phone of an answer-style surface — Robinhood Lea
 the app, or any shipped answer-with-sources view — would let the panel be judged
 visually as well. The skill's other fallback, generated target stills, needs Travis to
 approve the targets first: an agent approving its own targets is self-grading by proxy.
+
+## Visual rounds, 2026-09-22/23 — and why they stopped
+
+The skill's first fallback for a piece with no shipped equivalent is a quality-level
+comp from an adjacent category, which needs no approval. `bar.png` here is the in-app
+screen from Robinhood's App Store frame `board/rh1.png` (a money figure, its breakdown and
+an explainer card), cropped to the phone screen and scaled so both sides of every pair
+are exactly 780x1348 — the earlier board rounds paired 588x1016 against 780x1688, and a
+size difference alone can tell a critic which is which.
+
+| Round | Result | What the critics named |
+| --- | --- | --- |
+| r1 | LOSS, both orders | a money question answered with a paragraph; "4 holdings" beside "1 got a BUY" unreconciled; an engineering footer ("no model key") shown to users |
+| r2 | LOSS, both orders | led with how big when the question asked why; holdings drawn as slivers on a 92%-empty track; reasons cut off; the BUY row showed an entry *trigger* as its reason |
+| r3 | LOSS, both orders | the segments were not drawn to scale (3% tile only 1.4x a 1.5% tile); the 92.5% unallocated only appeared as grey text |
+
+Each gap was real and each was fixed. r3's was a correctness bug, not taste: flexbox
+shares out spare space after each tile's padding, so the chart misstated proportions.
+After the fix the bar measures CRWD 40.0% / 20.0% / 20.0% / 20.0% for 3 : 1.5 : 1.5 : 1.5,
+checked in a browser, with a thin whole-book track underneath filled to exactly 7.5%.
+**That fix has not been judged by a critic.**
+
+**The loop stopped on its own gate, and it should have stopped sooner.** `gauntlet.py
+status` returns `STOP: wall clock 41.6h >= ceiling 8h`. The lead agent is meant to check
+status before every round and did not, so r1-r3 of the visual pieces - 12 critic calls -
+ran past the ceiling. No further rounds were run once that was noticed. Resuming needs
+Travis to raise `max_wall_hours` and set `spend_ceiling_usd`, which is still null.
+
+r2 and r3 critics also pulled in opposite directions: r2 called a whole-book bar
+unreadable slivers, r3 wanted the unallocated share visible. The shipped design does
+both - segments to scale within what is invested, plus the whole-book track - but no
+critic has seen it.

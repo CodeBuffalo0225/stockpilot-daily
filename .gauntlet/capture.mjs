@@ -24,8 +24,13 @@ const fullPage = argv.includes('--full');
 // a cropped element. Identical framing on both sides is what keeps the pair blind.
 const scrollIdx = argv.indexOf('--scroll-to');
 const scrollTo = scrollIdx >= 0 ? argv[scrollIdx + 1] : null;
-// Guard the -1 case: without --scroll-to, `i !== scrollIdx + 1` would drop argv[0].
-const drop = scrollIdx >= 0 ? new Set([scrollIdx, scrollIdx + 1]) : new Set();
+// --ask "<question>" types a question into the ask panel and waits for the answer. An
+// empty input box is not the product a user judges; the answered state is.
+const askIdx = argv.indexOf('--ask');
+const askQ = askIdx >= 0 ? argv[askIdx + 1] : null;
+// Guard the -1 cases: without a flag, `i !== idx + 1` would drop argv[0].
+const drop = new Set();
+for (const i of [scrollIdx, askIdx]) if (i >= 0) { drop.add(i); drop.add(i + 1); }
 const args = argv.filter((a, i) => a !== '--full' && !drop.has(i));
 const [piece, url, out = `.gauntlet/shots/${piece}.png`] = args;
 if (!piece || !url) {
@@ -51,8 +56,22 @@ try {
   await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20_000 });
   await page.waitForTimeout(3000);
 }
+if (askQ) {
+  await page.locator('.ask__input').first().fill(askQ);
+  await page.locator('.ask__go').first().click();
+  // Wait for the answer to replace the empty state, not for a fixed delay.
+  await page.waitForFunction(
+    (q) => {
+      const card = document.querySelector('.ask');
+      return !!card && card.innerText.length > q.length + 80;
+    },
+    askQ,
+    { timeout: 15_000 },
+  );
+}
 if (scrollTo) {
-  await page.locator(scrollTo).first().scrollIntoViewIfNeeded();
+  // Top-aligned, so the piece opens the frame the way it does when a reader scrolls to it.
+  await page.locator(scrollTo).first().evaluate((el) => el.scrollIntoView({ block: 'start' }));
   await page.waitForTimeout(400);
 }
 // The board animates in; settle before the shutter so two rounds are comparable.

@@ -10,6 +10,7 @@ import type { LensView, Foldable } from '../src/lens/lens';
 import { TickerRail } from './TickerRail';
 import { LensPanel, LensInvite } from './LensPanel';
 import { AskBoard } from './AskBoard';
+import { buildBook } from '../src/ask/book';
 
 const FPS = 30;
 
@@ -73,6 +74,8 @@ export function Dashboard({
   const [selected, setSelected] = useState<string | null>(null);
 
   const duration = useMemo(() => buildTimeline(deck, FPS).total, [deck]);
+  // The ask panel draws this when asked what was bought; built once, from the deck only.
+  const book = useMemo(() => buildBook(deck), [deck]);
 
   const dims =
     format === 'vertical' ? { width: 1080, height: 1920 } : { width: 1920, height: 1080 };
@@ -143,7 +146,7 @@ export function Dashboard({
           {/* ------------------------------------------------------ stage */}
           <section>
             {lens ? (
-              <LensPanel view={lens} clearHref={`/?date=${deck.date}`} />
+              <LensPanel view={lens} clearHref={`/?date=${deck.date}`} date={deck.date} />
             ) : (
               quizUrl && <LensInvite quizUrl={quizUrl} />
             )}
@@ -170,8 +173,17 @@ export function Dashboard({
               {deck.allocation.length === 0 ? (
                 <div className="empty">Nothing sized today.</div>
               ) : (
-                deck.allocation.map((p) => {
+                <>
+                  <div className="today__head" aria-hidden="true">
+                    <span>Holding</span>
+                    <span className="today__hp">Price</span>
+                    <span>Day</span>
+                    <span>Size</span>
+                  </div>
+                  {deck.allocation.map((p) => {
                   const t = deck.tape.find((x) => x.ticker === p.ticker);
+                  // Same reconciled verdict as the ask panel's book - never guessed.
+                  const v = book?.rows.find((r) => r.ticker === p.ticker)?.verdict ?? null;
                   return (
                     <button
                       type="button"
@@ -179,19 +191,25 @@ export function Dashboard({
                       key={p.ticker}
                       onClick={() => setSelected(p.ticker)}
                     >
-                      <span className="today__t">{p.ticker}</span>
-                      <span className="today__n">{p.name ?? ''}</span>
+                      <span className="today__id">
+                        <span className="today__t">{p.ticker}</span>
+                        {v && <span className={`today__v today__v--${v.toLowerCase()}`}>{v}</span>}
+                        {p.name && <span className="today__n">{p.name}</span>}
+                      </span>
                       <span className="today__p">{t?.price != null ? t.price.toFixed(2) : '—'}</span>
                       <span
                         className="today__c"
-                        style={{ color: (t?.changePct ?? 0) >= 0 ? 'var(--buy)' : 'var(--skip)' }}
+                        style={{ color: t?.changePct == null ? 'var(--text-faint)' : t.changePct >= 0 ? 'var(--buy)' : 'var(--skip)' }}
                       >
                         {pct(t?.changePct ?? null)}
                       </span>
-                      <span className="today__w">{p.positionPct}%</span>
+                      <span className="today__w">
+                        {p.positionPct}%<span className="today__wl">of book</span>
+                      </span>
                     </button>
                   );
-                })
+                })}
+                </>
               )}
             </div>
 
@@ -239,7 +257,7 @@ export function Dashboard({
               </div>
             )}
 
-            <AskBoard date={deck.date} lens={lens?.key} ai={lens?.ai} />
+            <AskBoard date={deck.date} lens={lens?.key} ai={lens?.ai} book={book} />
           </section>
 
           {/* -------------------------------------------------------- rail */}
