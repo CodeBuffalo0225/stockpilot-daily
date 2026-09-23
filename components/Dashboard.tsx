@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { Player } from '@remotion/player';
 import { StockPilotDaily } from '../src/video/StockPilotDaily';
@@ -58,6 +58,18 @@ export function Dashboard({
   quizUrl: string | null;
 }) {
   const router = useRouter();
+  useEffect(() => {
+    if (store.kind !== 'supabase') return;
+    const refresh = () => {
+      if (document.visibilityState === 'visible') router.refresh();
+    };
+    const timer = window.setInterval(refresh, 60_000);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', refresh);
+    };
+  }, [router, store.kind]);
   const folded = (f: Foldable) => lens?.fold.includes(f) ?? false;
 
   // Switching days keeps the lens. Without this the date picker silently dropped
@@ -125,7 +137,7 @@ export function Dashboard({
                 className={`badge__dot${store.kind === 'local' ? ' badge__dot--warn' : ''}`}
                 title={store.detail}
               />
-              {store.label}
+              {store.kind === 'supabase' ? 'Live reports' : store.label}
             </span>
             <select
               className="btn"

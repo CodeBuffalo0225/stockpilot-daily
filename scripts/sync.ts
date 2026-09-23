@@ -38,6 +38,13 @@ import { describeStore } from '../src/spine/store';
 
 async function main() {
   const argv = process.argv.slice(2);
+  const publishing = argv.includes('--publish');
+  if (publishing) {
+    const url = new URL(process.env.SUPABASE_URL || 'http://localhost');
+    if (url.protocol !== 'https:' || !url.hostname.endsWith('.supabase.co') || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('Live publishing requires a hosted Supabase URL and server key. Local-only sync is not a successful publish.');
+    }
+  }
   const backfillAt = argv.indexOf('--backfill');
   const store = describeStore();
   console.log(`\nstore: ${store.label} (${store.detail})\n`);
@@ -48,13 +55,20 @@ async function main() {
     dates = (await listLocalDates()).slice(0, n);
     console.log(`backfilling ${dates.length} dates\n`);
   } else {
-    dates = [argv.find((a) => !a.startsWith('--'))];
+    dates = publishing
+      ? (await listLocalDates()).slice(0, 3)
+      : [argv.find((a) => !a.startsWith('--'))];
   }
+
+  if (!dates.length) throw new Error('No local pipeline reports found to publish.');
 
   let ok = 0;
   for (const date of dates) {
     try {
       const { deck, warnings } = await fetchDeck(date);
+      if (publishing && !['local', 'local+notion'].includes(deck.source)) {
+        throw new Error('The complete local report is unavailable; refusing a partial live update.');
+      }
       const res = await pushDeck(deck, projectRoot);
       console.log(
         `  ✓ ${res.date} → ${res.target}  [${deck.source}]  positions ${res.rows.positions} · tape ${res.rows.tape} · momentum ${res.rows.momentum}`,

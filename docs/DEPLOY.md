@@ -1,5 +1,30 @@
 # Deploying StockPilot Daily
 
+## Live reports rollout (prepared, not yet enabled)
+
+The local pipeline already produces current reports. To make them visible without
+redeploying, configure hosted Supabase using the schema in
+`supabase/migrations/0001_init.sql`, and set its server-only URL and service key in
+both `.env.local` and the Vercel production environment. Never use the local
+`127.0.0.1` database for publishing.
+
+Initial backfill: `npm run publish:reports -- --backfill 60`. Recurring publishing:
+`npm run publish:reports`. It re-publishes the three latest local dates, so late
+corrections and missed runs are retried. It exits unsuccessfully if hosted storage
+is missing, no reports exist, or a complete local report cannot be loaded.
+Only a successful cloud write counts as publication.
+
+After configuring storage, deploy the dashboard once. It then reads the hosted
+database on each request and refreshes visible browser sessions every minute.
+An explicitly selected historical date stays selected.
+
+Enable the recurring publisher on the pipeline machine only after the first
+backfill and deployed-page verification succeed. The machine must be awake for
+local generation and publishing; hosted report reads remain available while it
+is offline. Do not replace the full local data with a Notion-only server cron.
+Verify the latest date and Ask the board after publishing, and report failed
+publishes rather than claiming the feed updated.
+
 Production: **https://stockpilotdaily.vercel.app** — Vercel project `stockpilotdaily`
 (Hobby plan, account `tsm5110-6848`).
 
