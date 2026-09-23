@@ -150,6 +150,25 @@ test('a portfolio-wide return is never grounded, because the deck holds no such 
   }
 });
 
+test('a proper noun with a number in it is not a count claim', () => {
+  // 2026-09-23's thesis said "a Magnificent 7 name"; the claim reader took "7 name" as
+  // "seven names", flagged the engine for quoting the deck, and blocked the publish.
+  const quoted = { ...deck, thesis: `${deck.thesis} A 10% gap in a Magnificent 7 name is not noise.` };
+  assert.equal(
+    applyGates(reply({ answer: 'A 10% gap in a Magnificent 7 name is not noise.' }), facts, quoted),
+    null,
+  );
+});
+
+test('quoting the deck verbatim is grounded, but a real number in a new sentence is not', () => {
+  const ret = deck.momentum.find((m) => m.ret63d != null)!.ret63d!;
+  // Same number, the deck never said this sentence: still caught.
+  const made = `${deck.allocation[0].ticker} is ${ret.toFixed(1)}% of the book today.`;
+  assert.equal(applyGates(reply({ answer: made }), facts, deck), 'ungrounded');
+  // Counts are still checked when plural.
+  assert.equal(applyGates(reply({ answer: 'There are 97 names on the screen.' }), facts, deck), 'ungrounded');
+});
+
 test('a real position size still passes when stated as one', () => {
   const p = deck.allocation[0];
   const answer = `${p.ticker} is ${p.positionPct}% of the book.`;

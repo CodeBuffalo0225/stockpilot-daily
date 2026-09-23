@@ -73,8 +73,37 @@ export function claimAfter(text: string, at: number): Claim {
   const tail = text.slice(at, at + 40).toLowerCase();
   if (/^%?\s*(of (the )?(book|portfolio)|position\b|of (my|your) (book|portfolio))/.test(tail)) return 'size';
   if (/^%?\s*(since (inception|the start)|all[- ]time|lifetime|total return)/.test(tail)) return 'portfolio_return';
-  if (/^\s*(names?|positions?|tickers?|stocks?)\b/.test(tail)) return 'count';
+  // Plural only. "a Magnificent 7 name" is a proper noun followed by a singular, not a
+  // claim that there are seven names; reading it as a count rejected the deck's own
+  // thesis on 2026-09-23 and blocked that day's publish. A singular counts only after 1.
+  if (/^\s*(names|positions|tickers|stocks)\b/.test(tail)) return 'count';
+  if (/^\s*(name|position|ticker|stock)\b/.test(tail) && /(^|[^\d.])1$/.test(text.slice(0, at))) return 'count';
   return null;
+}
+
+/** Every string the deck holds, for recognising a verbatim quote of it. */
+function deckStrings(deck: DailyDeck): string[] {
+  const out: string[] = [];
+  const walk = (v: unknown): void => {
+    if (typeof v === 'string') out.push(v);
+    else if (Array.isArray(v)) v.forEach(walk);
+    else if (v && typeof v === 'object') Object.values(v).forEach(walk);
+  };
+  walk(deck);
+  return out;
+}
+
+/**
+ * True when the words around a figure appear word for word in the deck. Quoting the
+ * deck is the deck's own claim, so it is grounded by definition - whatever unit the
+ * figure seems to wear. The window is wide enough that a misleading quote cannot be
+ * assembled from a stray number: "87.4% of the book" is not a substring of any deck
+ * string even though 87.4 is a deck number.
+ */
+function quotesDeck(text: string, start: number, end: number, strings: string[]): boolean {
+  const W = 24;
+  const window = text.slice(Math.max(0, start - W), Math.min(text.length, end + W));
+  return strings.some((s) => s.includes(window));
 }
 
 /** Position sizes the deck actually allocated. The only numbers that may wear "% of the book". */
@@ -98,7 +127,9 @@ export function ungrounded(text: string, deck: DailyDeck): Figure[] {
   const counts = deckCounts(deck);
   const out: Figure[] = [];
 
+  const strings = deckStrings(deck);
   for (const f of figuresWithOffsets(text)) {
+    if (quotesDeck(text, f.start, f.end, strings)) continue;
     const claim = claimAfter(text, f.end);
     // A portfolio-wide return is not a figure this deck holds at all, so no value of
     // it can be grounded. Saying so is the honest outcome, not finding a near match.
@@ -110,12 +141,13 @@ export function ungrounded(text: string, deck: DailyDeck): Figure[] {
 }
 
 /** figuresIn, keeping where each figure ended so its claim can be read off the text. */
-function figuresWithOffsets(text: string): Array<{ figure: Figure; end: number }> {
+function figuresWithOffsets(text: string): Array<{ figure: Figure; start: number; end: number }> {
   const masked = text
     .replace(/\d{4}-\d{2}-\d{2}/g, (m) => ' '.repeat(m.length))
     .replace(/\b\d+(?:-day| days|-week| weeks|-month| months)\b/g, (m) => ' '.repeat(m.length));
   return [...masked.matchAll(/[-+]?\d+(?:\.(\d+))?/g)].map((m) => ({
     figure: { raw: m[0], value: Number(m[0]), dp: m[1]?.length ?? 0 },
+    start: m.index ?? 0,
     end: (m.index ?? 0) + m[0].length,
   }));
 }
