@@ -19,3 +19,6 @@ tsconfig.tsbuildinfo
 # but uploaded). .claude holds agent definitions.
 .gauntlet
 .claude
+
+# Local run log of the weekday publish; not part of the app.
+data/publish-log.jsonl

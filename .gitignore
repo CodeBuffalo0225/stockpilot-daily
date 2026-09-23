@@ -14,6 +14,8 @@ next-env.d.ts
 
 # synced decks (regenerate with npm run sync)
 data/decks/
+# one line per weekday publish run, read locally (npm run publish:live)
+data/publish-log.jsonl
 public/preview.html
 
 # gauntlet run artifacts (the harness is committed; a run's output is not)

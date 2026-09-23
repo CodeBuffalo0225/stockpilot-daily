@@ -41,6 +41,7 @@
     "lint": "eslint src scripts components app && tsc",
     "check": "tsx scripts/check-sources.ts",
     "sync": "tsx scripts/sync.ts",
+    "publish:live": "tsx scripts/publish-live.ts",
     "publish:reports": "tsx scripts/sync.ts --publish",
     "daily": "tsx scripts/daily.ts",
     "deck": "tsx src/spine/fetch-deck.ts",
