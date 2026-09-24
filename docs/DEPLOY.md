@@ -31,6 +31,33 @@ Production: **https://stockpilotdaily.vercel.app** — Vercel project `stockpilo
 `stockpilot-daily` and `stockpilot-board` are earlier projects that still serve old
 builds. They were abandoned while chasing failure mode 2, before its cause was known.
 
+## The weekday schedule (pre-market, 8-9 am ET)
+
+| Time (ET) | What | Where |
+| --- | --- | --- |
+| 07:10 | Mac wakes | `pmset repeat` — Travis installs it, see below |
+| 07:15 | pipeline writes `reports/<date>.json` (7-35 min) | scheduled task `stockpilot-daily` |
+| 07:20 | publish starts, holds the Mac awake, waits for the report | scheduled task `stockpilot-publish-live` |
+| 08:00 | deploy, then confirm the live site serves the date (~3-5 min) | `publish:live --not-before 08:00` |
+
+Why these times: 07:15 lets the pipeline read overnight and European-session news
+that a 06:00 run misses, and still leaves over an hour of margin for a slow run.
+The board is live by about 08:05, which gives an investor well over an hour with it
+before the 09:30 open. Weekends and NYSE holidays exit `market_closed` in code
+(`src/spine/market-calendar.ts`), not in the task prompt.
+
+**The Mac must be awake.** Scheduled tasks only fire while the Claude desktop app is
+running on an awake Mac; on 2026-09-24 the 06:33 publish waited for the 10:59 wake and
+ran after the open. One scheduled wake covers the morning, because the publish task
+runs under `caffeinate -i` from 07:20 until the board is confirmed. This is persistent
+system config, so it is not installed by an agent. Run it once:
+
+```bash
+sudo pmset repeat wakeorpoweron MTWRF 07:10:00
+```
+
+Check it with `pmset -g sched`. Keep the Mac on power, and the Claude app open.
+
 ## Why this deploys from the CLI, not from git
 
 `data/decks/` is gitignored on purpose — the pipeline reports exist only on the
@@ -100,6 +127,13 @@ deployment blocks, read the whole record before theorising:
 curl -s -H "Authorization: Bearer $TOKEN" \
   https://api.vercel.com/v13/deployments/<host> | python3 -m json.tool | grep -iE 'reason|block|error'
 ```
+
+**2b. `Not authorized` with no deployment created — the CLI login expired.** Not
+failure mode 2: `vercel ls` shows no new row at all. The CLI's OAuth token lasts a few
+hours and refreshes on use; on 2026-09-24 an unattended run hit it mid-refresh.
+`publish:live` now calls `vercel whoami` first and retries the deploy once on an auth
+error. The `UNKNOWN` rows `vercel ls` shows with `source: git` are GitHub-push deploys
+blocked by mode 2 — harmless, since the CLI deploy is the publish.
 
 **3. Deployment protection is not the obstacle to a public site.** The default,
 `all_except_custom_domains`, leaves the production domain public. Only per-deployment

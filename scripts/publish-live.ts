@@ -3,6 +3,7 @@
 //   npm run publish:live                      # today's report; waits up to 30 min for it
 //   npm run publish:live -- --date 2026-09-23 --wait-min 0
 //   npm run publish:live -- --dry-run         # every gate, no deploy
+//   npm run publish:live -- --wait-min 75 --not-before 08:00   # the weekday task's form
 //
 // Runs on the pipeline machine, because the reports only exist there (see AGENTS.md).
 // The site reads the decks baked into its deployment, so the deploy IS the publish.
@@ -19,7 +20,12 @@
 //   6  the deploy failed
 //   7  deployed, but the live site never showed the new date. A deploy nobody confirmed
 //      is not a publish - 2026-09-22 had a Ready deploy serving 404s on every route.
-//   0  published and confirmed live, or it was already live
+//   0  published and confirmed live, or it was already live, or the market is closed
+//      that day (weekend / NYSE holiday - the pipeline has nothing to say about a day
+//      nobody can trade, so there is nothing to wait for)
+//
+// The board is meant to be live before the 9:30 ET open. Every publish records
+// `beforeOpen`, so a late morning shows up in the log instead of passing as a success.
 //
 // One JSON line per run is appended to data/publish-log.jsonl, so a missed day can be
 // read off the machine rather than reconstructed.
@@ -27,6 +33,7 @@ import { spawnSync } from 'node:child_process';
 import { readFile, appendFile, access } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { marketClosedReason } from '../src/spine/market-calendar';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PIPELINE_DIR = process.env.STOCKPILOT_DIR ?? join(process.env.HOME ?? '', 'Documents', 'stockpilot');
@@ -42,6 +49,10 @@ const flag = (name: string) => {
 const dryRun = argv.includes('--dry-run');
 const date = flag('--date') ?? new Date().toLocaleDateString('en-CA'); // local YYYY-MM-DD
 const waitMin = Number(flag('--wait-min') ?? 30);
+// --not-before 08:00 holds the deploy until that New York time. The weekday task starts
+// earlier, under caffeinate, so one scheduled wake keeps the Mac up through the pipeline
+// and the publish; this is what keeps the board from going out before the 8-9 am window.
+const notBefore = flag('--not-before');
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const exists = (p: string) => access(p).then(() => true, () => false);
@@ -70,7 +81,37 @@ async function liveShows(d: string): Promise<boolean> {
   }
 }
 
+// Minutes past midnight in New York, whatever zone the Mac is set to.
+function nyMinutes(d = new Date()): number {
+  const [h, m] = d
+    .toLocaleTimeString('en-GB', { timeZone: 'America/New_York', hour12: false })
+    .split(':')
+    .map(Number);
+  return h * 60 + m;
+}
+const OPEN_MIN = 9 * 60 + 30;
+
+// The CLI's login is an OAuth token that expires every few hours and refreshes on use.
+// On 2026-09-24 the unattended run hit it mid-refresh and the deploy died "Not authorized"
+// (auth.json was rewritten the same minute). So touch the API first, and if a deploy
+// still fails on auth, refresh once more and retry - once, not in a loop.
+const AUTH_FAILURE = /Not authorized|token.*(expired|invalid)|Please log in|vercel login/i;
+function deploy() {
+  run('npx', ['--yes', 'vercel', 'whoami']);
+  let dep = run('npx', ['--yes', 'vercel', '--prod', '--yes']);
+  if (dep.code !== 0 && AUTH_FAILURE.test(dep.out)) {
+    console.log('deploy failed on auth; refreshing the login and retrying once');
+    run('npx', ['--yes', 'vercel', 'whoami']);
+    dep = run('npx', ['--yes', 'vercel', '--prod', '--yes']);
+  }
+  return dep;
+}
+
 async function main() {
+  // Gate 0: a day the market is closed has no board to publish.
+  const closed = marketClosedReason(date);
+  if (closed) return finish(0, 'market_closed', { reason: closed });
+
   // Gate 1: the pipeline's report for the day. The weekday task fires after the pipeline
   // task, but if the Mac was asleep both fire on wake in no promised order - so wait for
   // the report rather than failing a race.
@@ -115,14 +156,28 @@ async function main() {
 
   if (dryRun) return finish(0, 'dry_run_ok', { backfilled, positions: deck.allocation?.length ?? 0 });
 
+  if (notBefore) {
+    const [h, m] = notBefore.split(':').map(Number);
+    while (nyMinutes() < h * 60 + m) {
+      console.log(`holding until ${notBefore} New York time ...`);
+      await sleep(30_000);
+    }
+  }
+
   // Gate 5: deploy, then confirm the public site actually serves the day.
-  const dep = run('npx', ['--yes', 'vercel', '--prod', '--yes']);
+  const dep = deploy();
   const deployUrl = dep.out.match(/https:\/\/stockpilotdaily-[a-z0-9]+-[a-z0-9-]+\.vercel\.app/)?.[0] ?? null;
   if (dep.code !== 0) return finish(6, 'deploy_failed', { deployUrl, tail: dep.out.slice(-600) });
 
   for (let i = 0; i < 12; i++) {
     if (await liveShows(date)) {
-      return finish(0, 'published', { url: LIVE_URL, deployUrl, backfilled, positions: deck.allocation?.length ?? 0 });
+      return finish(0, 'published', {
+        url: LIVE_URL,
+        deployUrl,
+        backfilled,
+        positions: deck.allocation?.length ?? 0,
+        beforeOpen: nyMinutes() < OPEN_MIN,
+      });
     }
     await sleep(10_000);
   }
