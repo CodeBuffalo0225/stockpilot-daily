@@ -26,3 +26,9 @@ public/preview.html
 .gauntlet/started_at
 .vercel
 .env*
+
+# cloud fallback: state-branch worktree, cloud pipeline copy, local restore bookkeeping
+.state/
+.pipeline/
+.state-backups/
+.state-gen

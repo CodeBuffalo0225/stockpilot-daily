@@ -1,7 +1,7 @@
 {
   "name": "stockpilot-daily",
   "version": "1.0.0",
-  "description": "StockPilot Daily — the daily agent run, rendered as a broadcast-style video",
+  "description": "StockPilot Daily \u2014 the daily agent run, rendered as a broadcast-style video",
   "repository": {},
   "license": "UNLICENSED",
   "private": true,
@@ -56,7 +56,10 @@
     "bundle": "remotion bundle",
     "upgrade": "remotion upgrade",
     "test": "tsx --test test/*.test.ts",
-    "ask": "tsx scripts/ask-once.ts"
+    "ask": "tsx scripts/ask-once.ts",
+    "pipeline": "tsx scripts/pipeline-run.ts",
+    "state:seed": "tsx scripts/state-seed.ts",
+    "state:show": "tsx scripts/state-seed.ts --show"
   },
   "sideEffects": [
     "*.css"

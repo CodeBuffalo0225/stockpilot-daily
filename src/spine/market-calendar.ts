@@ -57,6 +57,21 @@ export function nyseHolidays(y: number): Map<string, string> {
   return h;
 }
 
+// The trading day and clock in New York, whatever zone the machine is in - the Mac and
+// a UTC cloud runner must agree on which day they are fighting over.
+export const nyDate = (d = new Date()) => d.toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+export function nyMinutes(d = new Date()): number {
+  const [h, m] = d
+    .toLocaleTimeString('en-GB', { timeZone: 'America/New_York', hour12: false })
+    .split(':')
+    .map(Number);
+  return (h % 24) * 60 + m;
+}
+export const hhmm = (s: string) => {
+  const [h, m] = s.split(':').map(Number);
+  return h * 60 + m;
+};
+
 // Why the market is closed on a YYYY-MM-DD date, or null when it opens.
 export function marketClosedReason(date: string): string | null {
   const [y, m, d] = date.split('-').map(Number);
