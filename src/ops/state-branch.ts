@@ -131,7 +131,7 @@ export class StateBranch {
   // --- lease operations ------------------------------------------------------------
 
   acquire(date: string, me: Runner): { ok: boolean; decision: Decision; lease: Lease | null } {
-    return this.transact(`${date}: ${me} claims`, () => {
+    return this.transact<{ ok: boolean; decision: Decision; lease: Lease | null }>(`${date}: ${me} claims`, () => {
       const prior = this.lease(date);
       const decision = decide(prior, me, Date.now());
       if (decision.act === 'skip') return { write: false, value: { ok: false, decision, lease: prior } };
