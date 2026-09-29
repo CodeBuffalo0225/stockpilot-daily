@@ -24,6 +24,7 @@ import type { DailyDeck } from '../spine/schema';
 import { deckFacts } from './facts';
 import { engineAnswer, type Intent } from './answer';
 import { ungrounded } from './grounding';
+import { jevRoute } from './jev-router';
 import { AskAnswer } from './schema';
 
 const MODEL = 'claude-opus-5';
@@ -54,6 +55,8 @@ export interface AskResult {
   answer: string;
   source: 'model' | 'engine';
   intent: Intent;
+  /** Who picked the route: Jev when it answered with enough confidence, else the keyword rules. */
+  router: 'jev' | 'keyword';
   /** Why the model's answer was not used, when it was not. */
   reason?: 'no_key' | 'daily_cap' | 'refusal' | 'no_output' | 'bad_shape' | 'bad_citation' | 'ungrounded' | 'prescriptive' | 'api_error' | 'not_answerable';
 }
@@ -91,11 +94,16 @@ export async function ask(
   deck: DailyDeck,
   lensName: string | null,
   env: NodeJS.ProcessEnv = process.env,
+  deps: { fetch?: typeof fetch } = {},
 ): Promise<AskResult> {
-  const fallback = engineAnswer(question, deck);
+  // Routing comes first so it also serves the no-model-key path: the engine answers
+  // whatever Jev routed to, and the keyword rules cover everything Jev does not.
+  const routed = await jevRoute(question, deck, env, deps.fetch);
+  const router: AskResult['router'] = routed ? 'jev' : 'keyword';
+  const fallback = engineAnswer(question, deck, routed ?? undefined);
   const give = (reason: AskResult['reason']): AskResult => {
-    log(deck, 'engine', { reason, intent: fallback.intent });
-    return { ...fallback, source: 'engine', reason };
+    log(deck, 'engine', { reason, intent: fallback.intent, router });
+    return { ...fallback, source: 'engine', router, reason };
   };
 
   const apiKey = env.ANTHROPIC_API_KEY?.trim();
@@ -144,8 +152,8 @@ export async function ask(
     return give(rejected);
   }
 
-  log(deck, 'model', { intent: fallback.intent, facts: parsed.usedFacts.length });
-  return { answer: parsed.answer, source: 'model', intent: fallback.intent };
+  log(deck, 'model', { intent: fallback.intent, router, facts: parsed.usedFacts.length });
+  return { answer: parsed.answer, source: 'model', intent: fallback.intent, router };
 }
 
 /**

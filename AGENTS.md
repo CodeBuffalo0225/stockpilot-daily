@@ -205,6 +205,18 @@ answerer), `ask.ts` (model call + gates), `grounding.ts` (the gate itself),
   this is public** (Vercel Firewall rule; dashboard, not code).
 - Questions are never logged. Provider error bodies are never logged or returned - they
   can carry the question.
+- **Jev routes; the engine still writes every answer** (`src/ask/jev-router.ts`). Jev
+  (TypeSafe System One) picks which part of the board a question wants, from a fixed
+  option list, with a confidence. It never sees the deck: only the question text and the
+  deck's ticker symbols leave the app. Below `JEV_MIN_CONFIDENCE` (0.70), on any error,
+  timeout, bad shape, unknown option, missing `JEV_API_KEY` or `JEV_DAILY_CAP` (default
+  1000 per instance), it returns null and the keyword router in `answer.ts` decides. An
+  uppercase ticker on the board is resolved in code and never spends a call. The 0.70
+  floor comes from a 52-question hand-labelled pilot (2026-09-28: Jev 47/52, keyword
+  30/52; 44/45 correct at >= 0.70) - re-measure before tightening it. `AskResult.router`
+  says who routed. The router only changes the deterministic answer; the model path
+  (`ANTHROPIC_API_KEY`) picks its own facts. The reader's question does go to a third
+  party (api.typesafe.ai) when the key is set; unset it to stop that.
 
 ## Data layer rules
 

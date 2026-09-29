@@ -67,8 +67,13 @@ function aboutTicker(deck: DailyDeck, t: string): string {
 }
 
 /** An answer built entirely from the deck. Never empty. */
-export function engineAnswer(question: string, deck: DailyDeck): { answer: string; intent: Intent } {
-  const { intent, ticker } = routeIntent(question, deck);
+export function engineAnswer(
+  question: string,
+  deck: DailyDeck,
+  /** A route chosen elsewhere (Jev). Absent, the keyword router decides. */
+  routed?: { intent: Intent; ticker?: string },
+): { answer: string; intent: Intent } {
+  const { intent, ticker } = routed ?? routeIntent(question, deck);
   const top = [...deck.allocation].sort((a, b) => b.positionPct - a.positionPct)[0] ?? null;
   const lead = [...deck.momentum].sort((a, b) => b.momentumScore - a.momentumScore)[0] ?? null;
 
