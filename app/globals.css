@@ -640,3 +640,37 @@ select.btn { appearance: none; padding-right: 28px; }
 .book__whole span { display: block; height: 100%; background: var(--text-dim); }
 .book__rest { margin: 7px 0 0; font-size: 12.5px; color: var(--text-dim); }
 .book__rest b { color: var(--text); font-weight: 600; }
+
+/* ------------------------------------------------- /subscribe + /privacy */
+
+.sub { max-width: 760px; padding-top: 40px; display: flex; flex-direction: column; gap: 44px; }
+.sub .brand { display: inline-block; font-size: 22px; }
+.sub h1 { font-size: clamp(32px, 6vw, 52px); font-weight: 900; letter-spacing: -1.2px; line-height: 1.05; margin: 0; text-wrap: balance; }
+.sub h2 { font-family: var(--mono); font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--text-faint); margin: 0 0 12px; font-weight: 500; }
+.sub p { margin: 0; max-width: 62ch; font-size: 16px; line-height: 1.62; color: var(--text-dim); }
+.sub a:not(.brand) { color: var(--accent); }
+.sub a:focus-visible, .sub button:focus-visible, .sub input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sub__hero { display: flex; flex-direction: column; gap: 18px; }
+.sub__lede { font-size: 19px !important; color: var(--text) !important; }
+.sub__form { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+.sub__form input[type='email'] {
+  flex: 1 1 240px; min-width: 0; padding: 14px 16px; border-radius: 10px;
+  background: var(--bg-lift); border: 1px solid var(--panel-edge); color: var(--text);
+  font: 500 15px var(--mono);
+}
+.sub__form button {
+  flex: 0 0 auto; padding: 14px 20px; border-radius: 10px; border: 0; cursor: pointer;
+  background: var(--buy); color: var(--bg); font: 800 15px var(--sans);
+}
+.sub__closed {
+  font-family: var(--mono); font-size: 13px !important; letter-spacing: 1px; color: var(--watch) !important;
+  border: 1px dashed var(--panel-edge); border-radius: 10px; padding: 14px 16px;
+}
+.sub__fine { font-size: 13px !important; color: var(--text-faint) !important; }
+.sub__section { display: flex; flex-direction: column; gap: 10px; }
+.sub__steps { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: 8px; color: var(--text); font-size: 16px; line-height: 1.5; }
+.sub__byline { font-size: 14px !important; }
+.sub__foot { border-top: 1px solid var(--panel-edge); padding-top: 20px; display: flex; flex-direction: column; gap: 10px; }
+.sub__foot p { font-size: 13px; color: var(--text-faint); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (max-width: 480px) { .sub { padding-left: 16px; padding-right: 16px; gap: 36px; } }
