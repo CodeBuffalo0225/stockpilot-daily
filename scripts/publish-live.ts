@@ -37,6 +37,7 @@ import { existsSync } from 'node:fs';
 import { marketClosedReason, nyDate, nyMinutes } from '../src/spine/market-calendar';
 import { HEARTBEAT_MS, type Runner } from '../src/ops/lease';
 import { StateBranch, listJson, copy } from '../src/ops/state-branch';
+import { pageShowsDeck } from '../src/ops/live-check';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PIPELINE_DIR = process.env.STOCKPILOT_DIR ?? join(process.env.HOME ?? '', 'Documents', 'stockpilot');
@@ -91,9 +92,9 @@ async function liveShows(d: string): Promise<boolean> {
   try {
     const r = await fetch(`${LIVE_URL}/?_=${Date.now()}`, { cache: 'no-store' });
     const html = await r.text();
-    // The date only exists on the page once a deployment carrying that deck is serving:
-    // the date chip and the day picker are both built from the decks in the deployment.
-    return r.ok && html.includes(d) && !/No decks yet|Store error/.test(html);
+    // Only the day picker proves a deployment carrying that deck is serving; the bare
+    // date string also turns up in other decks' UTC timestamps (see live-check.ts).
+    return r.ok && pageShowsDeck(html, d);
   } catch {
     return false;
   }
